@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Device Status</title>
+  <link rel="stylesheet" href="style.css">
+  <script src="module_polyfill.js"></script>
+  <script type="module">
+  /**
+   * Main application logic for OTA update.
+   */
+
+  // Import necessary utilities
+  import { gebi, IH, j2t, u2t } from './utils.js';
+
+  window.onload = () => {
+     //u2t('./mock_test', 'tcont1', {tableClass: "sttbl"});
+     u2t('./mock_test', 'tcont2', {tableClass: "sttbl-sm", rowHeadLocals: {Name: "Meno", Status:"Stav"}});
+     //u2t('./mock_test', 'tcont3', {tableClass: "sttbl-sm", colHeadLocals: {}});
+  };
+
+  </script>
+</head>
+<body>
+  <div class="container">
+  <h1>Device Status</h1>
+
+    <div id="tcont1">
+      <table class="sttbl" aria-describedby="status-desc">
+        <caption id="status-desc" class="vis-hidden">Current runtime and connectivity status of the device</caption>
+        <tbody>
+          <tr>
+            <th>Uptime</th>
+            <td data-label="Uptime">12h 34m</td>
+          </tr>
+          <tr>
+            <th>WiFi</th>
+            <td data-label="WiFi">Connected (MyHomeWiFi)</td>
+          </tr>
+          <tr>
+            <th>IP Address</th>
+            <td data-label="IP Address">192.168.1.42</td>
+          </tr>
+          <tr>
+            <th>MQTT</th>
+            <td data-label="MQTT">Connected to broker.example.com:1883</td>
+          </tr>
+          <tr>
+            <th>Free Heap</th>
+            <td data-label="Free Heap">48 KB</td>
+          </tr>
+          <tr>
+            <th>Firmware</th>
+            <td data-label="Firmware">v1.0.3 (2025-09-27)</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div id="tcont2"></div>
+    <div id="tcont3"></div>
+    <div class="row-center" style="margin-top:1.125rem;">
+      <a class="formbtn secbtn" href="index.html">Back</a>
+      <a class="mainbtn" href="/status/update">Refresh</a>
+    </div>
+  </div>
+</body>
+</html>

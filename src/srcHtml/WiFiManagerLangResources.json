@@ -1,0 +1,276 @@
+{
+    "template": "WiFiManagerLangResources.src.h",
+    "replaceMap" : [
+        {
+            "var": "%WM_PK_OTA_HTML%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "ota.html"
+            }
+        },
+        {
+            "var": "%WM_PK_INFO_HTML%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "info.html"
+            }
+        },
+        {
+            "var": "%WM_PK_INDEX_HTML%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "index.html"
+            }
+        },
+        {
+            "var": "%WM_PK_WIFI_HTML%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "wifi.html"
+            }
+        },
+        {
+            "var": "%WM_PK_MQTT_HTML%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "mqtt.html"
+            }
+        },
+        {
+            "var": "%CHIP_INFO_ESP8266%",
+            "comment": "Chip info table fragment for ESP8266",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_chip_info_esp8266.html"
+            }
+        },
+        {
+            "var": "%WM_PK_MODULE_POLYFILL_JS%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "module_polyfill.js"
+            }
+        },
+        {
+            "var": "%WM_PK_RESTART_JS%",
+            "comment": "Shared restart-modal helper",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "restart.js"
+            }
+        },
+        {
+            "var": "%WM_PK_UTILS_JS%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "utils.js"
+            }
+        },
+        {
+            "var": "%WM_PK_MD5_UTILS_JS%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "md5_utils.js"
+            }
+        },
+        {
+            "var": "%WM_PK_OTA_JS%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "ota.js"
+            }
+        },
+        {
+            "var": "%WM_PK_HW_STATUS_JS%",
+            "comment": "Hardware status monitoring script",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "hw-status.js"
+            }
+        },
+        {
+            "var": "%WM_PK_OTA_REMOTE_HTML%",
+            "comment": "OTA page with remote update section (WM_REMOTE_UPDATE)",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "ota_remote.html"
+            }
+        },
+        {
+            "var": "%WM_PK_OTA_REMOTE_JS%",
+            "comment": "Remote OTA update script (WM_REMOTE_UPDATE)",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "ota-remote.js"
+            }
+        },
+        {
+            "var": "%WM_PK_STYLE_CSS%",
+            "comment": "New design",
+            "value": {
+                "type": "template",
+                "format": "css",
+                "template": "style.css"
+            }
+        },
+        {
+            "var": "%HEAD_1%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_head_1.html"
+            }
+        },
+        {
+            "var": "%STYLE%",
+            "value": {
+                "type": "template",
+                "format": "css",
+                "template": "src_old_style.css"
+            }
+        },
+        {
+            "var": "%WM_SCRIPT%",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "src_script.js"
+            }
+        },
+        {
+            "var": "%COMMON_SCRIPT%",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "src_common_script.js"
+            }
+        },
+        {
+            "var": "%PWMCTRL_JS%",
+            "value": {
+                "type": "template",
+                "format": "js",
+                "template": "pwmctrl.js"
+            }
+        },
+        {
+            "var": "%TRAIN_CONTROL_OPTION%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_train_control_option.html"
+            }
+        },
+        {
+            "var": "%TRAIN_CONTROL%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_train_control.html"
+            }
+        },
+        {
+            "var": "%TRAIN_STYLE%",
+            "value": {
+                "type": "template",
+                "format": "css",
+                "template": "src_trainctrl.css"
+            }
+        },
+        {
+            "var": "%FORM_START%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_form_start.html"
+            }
+        },
+        {
+            "var": "%FORM_END%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_form_end.html"
+            }
+        },
+        {
+            "var": "%FORM_LABEL_BEFORE%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_form_label_before.html"
+            }
+        },
+        {
+            "var": "%FORM_LABEL_AFTER%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_form_label_after.html"
+            }
+        },
+        {
+            "var": "%FORM_LABEL%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_form_label.html"
+            }
+        },
+        {
+            "var": "%FORM_PARAM%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_form_param.html"
+            }
+        },
+        {
+            "var": "%SAVED%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_saved.html"
+            }
+        },
+        {
+            "var": "%ITEM%",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "src_item.html"
+            }
+        },
+        {
+            "var": "%JSON_ITEM%",
+            "value": {
+                "type": "template",
+                "format": "json",
+                "template": "src_json_item.json"
+            }
+        }
+    ]
+}

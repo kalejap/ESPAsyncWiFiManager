@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <title><!--L_MQTT_CONFIGURATION-->MQTT Configuration</title>
+  <link rel='stylesheet' href='style.css'>
+  <script src='module_polyfill.js'></script>
+  <script type='module'>
+    import { gebi, qsa, u2f } from './utils.js';
+
+    const toggleButtons = qsa('.toggle-password');
+
+    window.onload = () => { u2f('./sq?dx=mqtt'); };
+
+    document.addEventListener('DOMContentLoaded', () => {
+        toggleButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            const targetId = this.getAttribute('data-target');
+            const passwordInput = gebi(targetId);
+
+            if (passwordInput) {
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                this.textContent = type === 'password' ? '👁️' : '🔒';
+            }
+          });
+        });
+    });
+  </script>
+</head>
+<body>
+  <div class='container'>
+    <h1 class='ttl'><!--L_MQTT_CONFIGURATION-->MQTT Configuration</h1>
+    <form class='formsec' method='POST' action='/mqtt'>
+      <div>
+        <label class='flbl' for='host'><!--L_MQTT_HOST-->MQTT Host</label>
+        <input class='finp' type='text' id='host' name='host' required aria-label='MQTT host'>
+      </div>
+      <div>
+        <label class='flbl' for='port'><!--L_MQTT_PORT-->Port</label>
+        <input class='finp' type='number' id='port' name='port' value='1883' required aria-label='MQTT port'>
+      </div>
+      <div>
+        <label class='flbl' for='user'><!--L_MQTT_USERNAME-->Username</label>
+        <input class='finp' type='text' id='user' name='user' aria-label='MQTT username'>
+      </div>
+      <div>
+        <label class='flbl' for='pwd'><!--L_MQTT_PASSWORD-->Password</label>
+        <div class='password-wrapper'>
+          <input class='finp password-input' type='password' id='pwd' name='pwd' aria-label='MQTT Password'>
+          <button type='button' class='toggle-password' id='toggle_pwd' data-target='pwd' aria-label='Toggle password visibility'>👁️</button>
+        </div>
+      </div>
+      <div class='muted'><!--L_MQTT_BROKER_HINT-->If your broker requires TLS or a username/password, fill the fields; otherwise leave blank.</div>
+      <div class='row-center'>
+        <button class='formbtn' type='submit'><!--L_MQTT_SAVE-->Save MQTT</button>
+        <a class='formbtn secbtn' href='/'><!--L_GENERAL_BACK-->Back</a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>

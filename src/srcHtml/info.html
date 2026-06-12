@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='utf-8'>
+  <meta name='viewport' content='width=device-width,initial-scale=1'>
+  <title><!--L_DEVICE_STATUS-->Device Status</title>
+  <link rel='stylesheet' href='style.css'>
+  <script src='module_polyfill.js'></script>
+  <script type='module'>
+  // Import necessary utilities
+  import { gebi, IH, j2t, u2t } from './utils.js';
+
+  window.onload = () => {
+    u2t('./sq?dx=hwinfo', 'tcont1', {tableClass: 'sttbl', colHeadLocals: {}});
+    u2t('./sq?dx=fwinfo', 'tcont2', {tableClass: 'sttbl', colHeadLocals: {}});
+  };
+  </script>
+</head>
+<body>
+  <div class='container'>
+  <h1><!--L_DEVICE_INFO-->Device Info</h1>
+    <div id='tcont1'></div>
+    <div id='tcont2'></div>
+    <div class='row-center' style='margin-top:1.125rem;'>
+      <a class='mainbtn' href='/status/update'><!--L_GENERAL_REFRESH-->Refresh</a>
+      <a class='formbtn secbtn' href='/'><!--L_GENERAL_BACK-->Back</a>
+    </div>
+  </div>
+</body>
+</html>

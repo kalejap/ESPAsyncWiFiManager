@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title><!--D_IOT_APPLICATION_TITLE-->IoT Device Control</title>
+  <link rel='stylesheet' href='style.css'>
+  <script src='module_polyfill.js'></script>
+  <script src='hw-status.js'></script>
+</head>
+<body>
+  <div class='container'>
+  <h1><!--D_IOT_APPLICATION_TITLE-->IoT Device Control</h1>
+    <table class='sttbl' style='margin-bottom:1rem'>
+      <thead><tr><th><!--L_STATUS_SENSOR-->Sensor</th><th><!--L_STATUS_VALUE-->Value</th><th><!--L_STATUS_UNIT-->Unit</th></tr></thead>
+      <tbody id='hw-st-body'>
+        <tr><td colspan='3' style='text-align:center;color:var(--muted)'><!--L_STATUS_LOADING-->Loading…</td></tr>
+      </tbody>
+    </table>
+    <div class='btncol'>
+      <a class='mainbtn' href='/info'><!--L_INFORMATION_3DOTS-->Status</a>
+      <a class='mainbtn' href='/wifi'><!--L_WIFI_CONFIGURATION_3DOTS-->WiFi Configuration...</a>
+      <a class='mainbtn' href='/mqtt'><!--L_MQTT_CONFIGURATION_3DOTS-->MQTT Configuration</a>
+      <a class='mainbtn' href='/ota'><!--L_FIRMWARE_UPDATE_3DOTS-->Firmware Update...</a>
+      <a class='mainbtn' href='#' id='rstBtn'><!--L_RESTART_3DOTS-->Restart...</a>
+    </div>
+
+    <script type='module'>
+      import { showConfirmModal, showRestartModal } from './restart.js';
+      document.getElementById('rstBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        showConfirmModal(function() {
+          fetch('/r');
+          showRestartModal(10, /*L_RESTART_IN_PROGRESS*/'Restart in progress...');
+        });
+      });
+    </script>
+
+    <footer class='ftr'>
+      <hr>
+      <div class='ftr-line'><!--D_IOT_COPYRIGHT-->© 2025 Kalejap — <span class='muted'>Author: Kalejap</span></div>
+      <div class='ftr-line' id='fwVer'>Firmware: <!--D_IOT_SW_VERSION_STRING-->v1.0.3</div>
+    </footer>
+  </div>
+</body>
+</html>

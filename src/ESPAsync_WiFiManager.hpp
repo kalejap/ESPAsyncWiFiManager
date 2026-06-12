@@ -207,6 +207,7 @@
 ////////////////////////////////////////////////////
 
 #include "ESPAsync_WiFiManager_Debug.h"
+#include "ESPAsync_WiFiManagerUtils.h"
 
 ////////////////////////////////////////////////////
 
@@ -227,6 +228,8 @@
 
 #include <algorithm>
 #include <functional>
+#include <map>
+
 
 ////////////////////////////////////////////////////
 
@@ -455,22 +458,6 @@ const char WM_HTTP_SAVED[] PROGMEM = "<div class='msg'><b>Credentials Saved</b><
 
 const char WM_HTTP_END[] PROGMEM = "</div></body></html>";
 
-////////////////////////////////////////////////////
-
-const char WM_HTTP_HEAD_CL[]         = "Content-Length";
-const char WM_HTTP_HEAD_CT[]         = "text/html";
-const char WM_HTTP_HEAD_CT2[]        = "text/plain";
-
-const char WM_HTTP_HEAD_JSON[]       ="application/json";
-
-//KH Add repeatedly used const
-const char WM_HTTP_CACHE_CONTROL[]   = "Cache-Control";
-const char WM_HTTP_NO_STORE[]        = "no-cache, no-store, must-revalidate";
-const char WM_HTTP_PRAGMA[]          = "Pragma";
-const char WM_HTTP_NO_CACHE[]        = "no-cache";
-const char WM_HTTP_EXPIRES[]         = "Expires";
-const char WM_HTTP_CORS[]            = "Access-Control-Allow-Origin";
-const char WM_HTTP_CORS_ALLOW_ALL[]  = "*";
 
 ////////////////////////////////////////////////////
 
@@ -581,7 +568,7 @@ public:
     ESPAsync_WiFiManager(AsyncWebServer * webserver, AsyncDNSServer *dnsserver, const char *iHostname = "");
     ESPAsync_WiFiManager(AsyncWebServer * webserver, const char * username = "", const char * password = "",
         const char *iHostname = "");
-    ~ESPAsync_WiFiManager();
+    virtual ~ESPAsync_WiFiManager();
     
     //Scan for WiFiNetworks in range and sort by signal strength
     void          scan();
@@ -839,6 +826,13 @@ public:
         }
     }
 
+    ///////////////////////////
+
+    void setHardwareId(PGM_P hardwareId)
+    {
+        _hardwareId = hardwareId;
+    }
+     
 ////////////////////////////////////////////////////
  
 #if USE_ESP_WIFIMANAGER_NTP
@@ -893,9 +887,26 @@ public:
         return getTZ(timezoneName.c_str());      
     }
 
-    ///////////////////////////
-     
 #endif
+
+    //////////////////////////////////////////////////////////////
+    // Methods below allow application to customize the web server
+    // and add custom handlers.
+
+    // Method to attach custom web server handlers
+    virtual void attachCustomHandlers(ArRequestFilterFunction filtern);
+
+    // Method to handle static file request, return true if handled
+    virtual bool handleStaticFileRequest(AsyncWebServerRequest *request);
+
+    // Method to handle system query, return true if handled
+    virtual bool handleCustomSystemQuery(AsyncWebServerRequest *request);
+   
+    // Access to web server
+    AsyncWebServer* getWebServer()
+    {
+      return _server;
+    }
 
 private:
     // PK: Private member methods
@@ -910,19 +921,23 @@ private:
     String        networkListAsString();
     
     void          handleRoot(AsyncWebServerRequest *request);
-    void          handleSettings(AsyncWebServerRequest *request);
-    void          handleSettingsSave(AsyncWebServerRequest *request);
+    void          handleWiFiSave(AsyncWebServerRequest *request);
     void          handleServerClose(AsyncWebServerRequest *request);
     void          handleInfo(AsyncWebServerRequest *request);
-    void          handleState(AsyncWebServerRequest *request);
+    void          handleSystemQuery(AsyncWebServerRequest *request);
     void          handleScan(AsyncWebServerRequest *request);
     void          handleReset(AsyncWebServerRequest *request);
-    void          handleOTAUpdate(AsyncWebServerRequest *pRequest);
     void          handleOTAUpdateStart(AsyncWebServerRequest *pRequest);
     void          handleOTAUpdateUpload(AsyncWebServerRequest *request);
     void          handleOTAUpdateUploadFile(AsyncWebServerRequest *request,
                     String filename, size_t index, uint8_t *data, size_t len, bool final);
     void          handleNotFound(AsyncWebServerRequest *request);
+
+#ifdef WM_REMOTE_UPDATE
+    void          handleOTARemoteCheck(AsyncWebServerRequest *request);
+    void          handleOTARemoteStart(AsyncWebServerRequest *request);
+#endif
+
     bool          captivePortal(AsyncWebServerRequest *request);   
     void          attacheHandlers(ArRequestFilterFunction filtern);
 
@@ -972,6 +987,9 @@ private:
     // Timezone info
     String                  _timezoneName = "";
 #endif
+
+    // If the hardware ID is provided it will be check on firmaware update
+    PGM_P _hardwareId = nullptr;
 
     ////////////////////////////////////////////////////
 
@@ -1041,6 +1059,11 @@ private:
     std::function<void()>   _preOTAUpdateCallback = nullptr;
     std::function<void(size_t current, size_t final)> _progressOTAUpdateCallback = nullptr;
     std::function<void(bool success)> _postOTAUpdateCallback = nullptr;
+
+#ifdef WM_REMOTE_UPDATE
+    String   _pendingRemoteUrl;
+    uint32_t _pendingRemoteStartMs = 0;
+#endif
 
 
     ////////////////////////////////////////////////////

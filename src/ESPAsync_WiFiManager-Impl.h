@@ -38,208 +38,71 @@
 #ifndef ESPAsync_WiFiManager_Impl_h
 #define ESPAsync_WiFiManager_Impl_h
 
-#ifdef ESP8266
-    #define MEMORY_BLOCK(name) { name, nullptr, strlen(name) }
-    #define MEMORY_P_BLOCK(name) { nullptr, name, strlen_P((PGM_P)name) }
-    #define MEMORY_BLOCK2(name) { name, nullptr, nullptr strlen(name) }
-    #define MEMORY_P_BLOCK2(name) { nullptr, nullptr, name, strlen_P((PGM_P)name) }
-    #define MEMORY_S_BLOCK2(name) { nullptr, &name, nullptr, name.length() }
-#else
-    #define MEMORY_BLOCK(name) { name, strlen(name) }
-    #define MEMORY_P_BLOCK(name) MEMORY_BLOCK(name)
-    #define MEMORY_BLOCK2(name) { name, nullptr, strlen(name) }
-    #define MEMORY_P_BLOCK2(name) MEMORY_BLOCK2(name)
-    #define MEMORY_S_BLOCK2(name) { nullptr, &name, name.length() }
+// Utilities and shared structs
+#include "JSONUtils.h"
+#include "ESPAsync_WiFiManagerUtils.h"
+
+
+// index.html
+WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gIndexHtml, WM_PK_INDEX_HTML);
+// ota.html
+WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gOTAHtml, WM_PK_OTA_HTML);
+// info.html
+WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gInfoHtml, WM_PK_INFO_HTML);
+// wifi.html
+WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gWiFiHtml, WM_PK_WIFI_HTML);
+#ifdef WM_SUPPORT_HOME_ASSISTANT
+// mqtt.html
+WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gMQTTHtml, WM_PK_MQTT_HTML);
 #endif
 
-// Length of __FlashStringHelper string
-#define STRLEN_P(pStr) ((pStr) ? strlen_P((PGM_P)pStr) : 0)
-#define REPLACE_P(str, substr, pNewSubstr) str.replace(substr, (pNewSubstr) ? pNewSubstr : FPSTR(WM_PK_EMPTY_STR))
-#define APPEND_P(str, pStr) if (pStr) str += FPSTR(pStr)
-#define ARRAY_LENGTH(a) (sizeof(a)/sizeof(a[0]))
 
-
-struct MemoryBlock
-{
-    const char* pMemBlock;  // Pointer to RAM memory block
-#ifdef ESP8266
-    const __FlashStringHelper* pPMemBlock; // Pointer to program memory block
+// style.css
+WM_DEFINE_STATIC_CSS_FILE_AS_SINGLE_BLOCK(gStyleCSS, WM_PK_STYLE_CSS);
+// ota.js
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gOTAJS, WM_PK_OTA_JS);
+// utils.js
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gUtilsJS, WM_PK_UTILS_JS);
+// md5_utils.js
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gMD5UtilsJS, WM_PK_MD5_UTILS_JS);
+// module_polyfill.js
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gModulePolyfillJS, WM_PK_MODULE_POLYFILL_JS);
+// restart.js
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gRestartJS, WM_PK_RESTART_JS);
+#ifdef WM_REMOTE_UPDATE
+#include <ESP8266WiFi.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
+#include <WiFiClientSecure.h>
+#include <IoTDevice.h>
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gOTARemoteJS, WM_PK_OTA_REMOTE_JS);
 #endif
-    size_t size;
+
+
+HTTPMemoryBlockItem gTrainControlHtmlChunks[] = {
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTML_HEAD_1)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTTP_FIRMWARE_UPDATE_MSG)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTML_HEAD_2)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTTP_PWMCTRL_SCRIPT)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTML_STYLE_S)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTTP_TRAIN_STYLE)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTML_STYLE_E)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTML_HEAD_3)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTTP_TRAIN_CONTROL)),
+    WM_MEMORY_P_BLOCK_ITEM(FPSTR(WM_PK_HTML_FOOT))
 };
 
-struct MemoryBlock2
-{
-    const char* pMemBlock;  // Pointer to RAM memory block
-    const String* pString;  // Pointer to String
-#ifdef ESP8266
-    const __FlashStringHelper* pPMemBlock; // Pointer to program memory block
-#endif
-    size_t size;
-};
+const HTTPMemoryBlock gTrainControlHtmlBlock = WM_MEMORY_BLOCK(gTrainControlHtmlChunks);
 
-MemoryBlock gUpdateOTAHtml[] = {
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_HEAD_1)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_FIRMWARE_UPDATE_MSG)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_HEAD_2)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_OTA_SCRIPT)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_STYLE_S)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_STYLE)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_STYLE_E)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_HEAD_3)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_H2_S)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_FIRMWARE_UPDATE_MSG)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_H2_E)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_OTA_UPDATE)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_FOOT))
-};
-
-MemoryBlock gTrainControlHtml[] = {
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_HEAD_1)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_FIRMWARE_UPDATE_MSG)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_HEAD_2)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_PWMCTRL_SCRIPT)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_STYLE_S)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_TRAIN_STYLE)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_STYLE_E)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_HEAD_3)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTTP_TRAIN_CONTROL)),
-    MEMORY_P_BLOCK(FPSTR(WM_PK_HTML_FOOT))
+const HTTPResponseBlock gTrainControlHtmlBlockResponse = { 
+    FPSTR(WM_HTTP_HEAD_CT_TEXT_HTML), 
+    &gTrainControlHtmlBlock,
+    &gHTMLHeaders, 
 };
 
 //////////////////////////////////////////
 // PK
 namespace {
-    void CopyBlock(uint8_t *pBufferWithOffset, const MemoryBlock *pBlock, size_t blockOffset, 
-        size_t blockSize)
-    {
-        if (pBlock->pMemBlock != nullptr)
-        {
-            memcpy(pBufferWithOffset, pBlock->pMemBlock + blockOffset, blockSize);
-        }
-    #ifdef ESP8266
-        else if (pBlock->pPMemBlock != nullptr)
-        {
-            PGM_P p = reinterpret_cast<PGM_P>(pBlock->pPMemBlock);
-            memcpy_P(pBufferWithOffset, p + blockOffset, blockSize);
-        }
-    #endif
-    }
-
-    void CopyBlock(uint8_t *pBufferWithOffset, const MemoryBlock2 *pBlock, size_t blockOffset, 
-        size_t blockSize)
-    {
-        if (pBlock->pMemBlock != nullptr)
-        {
-            memcpy(pBufferWithOffset, pBlock->pMemBlock + blockOffset, blockSize);
-        }
-        else if (pBlock->pString != nullptr)
-        {
-            PGM_P p = reinterpret_cast<PGM_P>(pBlock->pPMemBlock);
-            memcpy(pBufferWithOffset, pBlock->pString->c_str() + blockOffset, blockSize);
-        }
-    #ifdef ESP8266
-        else if (pBlock->pPMemBlock != nullptr)
-        {
-            PGM_P p = reinterpret_cast<PGM_P>(pBlock->pPMemBlock);
-            memcpy_P(pBufferWithOffset, p + blockOffset, blockSize);
-        }
-    #endif
-    }
-
-    inline size_t BlockSize(const MemoryBlock2 *pBlocks)
-    {
-        return pBlocks ? (pBlocks->pString ? pBlocks->pString->length() : pBlocks->size) : 0;
-    }
-
-    // Function to send memory block
-    size_t SendMemoryBlock (const MemoryBlock *pBlocks, unsigned int countOfBlocks,
-        uint8_t *pBuffer, size_t bufLen, size_t index)
-    {
-        uint8_t *pBufferWithOffset = pBuffer;
-        size_t remainingBufLen = (bufLen & 0xFFFC); // Align buffer length to 4
-        size_t currentIndex = index;
-        size_t blockStart = 0;
-        size_t sizeOfCopiedMem = 0;
-
-        //LOGDEBUG1("SendMemoryBlock: bufLen=", bufLen);
-        //LOGDEBUG1("SendMemoryBlock: remainingBufLen=", remainingBufLen);
-        //LOGDEBUG1("SendMemoryBlock: countOfBlocks=", countOfBlocks);
-
-        for (unsigned int iBlock = 0; iBlock < countOfBlocks && remainingBufLen > 0; iBlock++)
-        {
-
-            size_t blockEnd = blockStart + pBlocks[iBlock].size;
-
-            while (blockStart <= currentIndex &&
-                   blockEnd > currentIndex &&
-                   remainingBufLen > 0)
-            {
-                size_t blockOffset = currentIndex - blockStart;
-                size_t blockSize = pBlocks[iBlock].size - blockOffset;
-                if (blockSize >= remainingBufLen)
-                {
-                    blockSize = remainingBufLen;
-                }
-
-                CopyBlock(pBufferWithOffset, pBlocks + iBlock, blockOffset, blockSize);
-                pBufferWithOffset += blockSize;
-                sizeOfCopiedMem += blockSize;
-                currentIndex += blockSize;
-                remainingBufLen -= blockSize;
-            }
-
-            blockStart = blockEnd;
-        }
-
-        //LOGDEBUG1("SendMemoryBlock: sizeOfCopiedMem=", sizeOfCopiedMem);
-        return sizeOfCopiedMem;
-    }
-    
-    // Function to send memory block
-    size_t SendMemoryBlock (const MemoryBlock2 *pBlocks, unsigned int countOfBlocks,
-        uint8_t *pBuffer, size_t bufLen, size_t index)
-    {
-        uint8_t *pBufferWithOffset = pBuffer;
-        size_t remainingBufLen = (bufLen & 0xFFFC); // Align buffer length to 4
-        size_t currentIndex = index;
-        size_t blockStart = 0;
-        size_t sizeOfCopiedMem = 0;
-
-        //LOGDEBUG1("SendMemoryBlock: bufLen=", bufLen);
-        //LOGDEBUG1("SendMemoryBlock: remainingBufLen=", remainingBufLen);
-        //LOGDEBUG1("SendMemoryBlock: countOfBlocks=", countOfBlocks);
-
-        for (unsigned int iBlock = 0; iBlock < countOfBlocks && remainingBufLen > 0; iBlock++)
-        {
-            size_t bs = BlockSize(pBlocks + iBlock);
-            size_t blockEnd = blockStart + bs;
-
-            while (blockStart <= currentIndex &&
-                   blockEnd > currentIndex &&
-                   remainingBufLen > 0)
-            {
-                size_t blockOffset = currentIndex - blockStart;
-                size_t blockSize = bs - blockOffset;
-                if (blockSize >= remainingBufLen)
-                {
-                    blockSize = remainingBufLen;
-                }
-
-                CopyBlock(pBufferWithOffset, pBlocks + iBlock, blockOffset, blockSize);
-                pBufferWithOffset += blockSize;
-                sizeOfCopiedMem += blockSize;
-                currentIndex += blockSize;
-                remainingBufLen -= blockSize;
-            }
-
-            blockStart = blockEnd;
-        }
-
-        //LOGDEBUG1("SendMemoryBlock: sizeOfCopiedMem=", sizeOfCopiedMem);
-        return sizeOfCopiedMem;
-    }
-    
 /*
     void buildHtmlPage(String& page,
         const __FlashStringHelper *pTitle,
@@ -345,104 +208,6 @@ namespace {
         LOGDEBUG("buildHtmlPage: after {style}");
         */
     }
-
-    void responseTextHtml(AsyncWebServerRequest *pRequest, const String& page)
-    {
-    #if ( USING_ESP32_S2 || USING_ESP32_C3 )
-        pRequest->send(200, WM_HTTP_HEAD_CT, page);
-
-        // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-        delay(1);
-    #else
-        AsyncWebServerResponse *pResponse = pRequest->beginResponse(200, WM_HTTP_HEAD_CT, page);
-        pResponse->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
-
-    #if USING_CORS_FEATURE
-        // For configuring CORS Header, default to WM_HTTP_CORS_ALLOW_ALL = "*"
-        pRequest->addHeader(FPSTR(WM_HTTP_CORS), _CORS_Header);
-    #endif
-
-        pResponse->addHeader(FPSTR(WM_HTTP_PRAGMA), FPSTR(WM_HTTP_NO_CACHE));
-        pResponse->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
-        pRequest->send(pResponse);
-    #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-    }
-
-    void responseTextHtml(AsyncWebServerRequest *pRequest, const MemoryBlock *pBlocks,
-        unsigned int countOfBlocks)
-    {
-    #if ( USING_ESP32_S2 || USING_ESP32_C3 )
-        pRequest->send(200, WM_HTTP_HEAD_CT, page);
-
-        // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-        delay(1);
-    #else
-        AsyncWebServerResponse *pResponse = pRequest->beginChunkedResponse(WM_HTTP_HEAD_CT,
-            [pBlocks, countOfBlocks](uint8_t *pBuffer, size_t bufLen, size_t index) -> size_t
-        {
-            return SendMemoryBlock(pBlocks, countOfBlocks, pBuffer, bufLen, index);
-        });
-        pResponse->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
-
-    #if USING_CORS_FEATURE
-        // For configuring CORS Header, default to WM_HTTP_CORS_ALLOW_ALL = "*"
-        pRequest->addHeader(FPSTR(WM_HTTP_CORS), _CORS_Header);
-    #endif
-
-        pResponse->addHeader(FPSTR(WM_HTTP_PRAGMA), FPSTR(WM_HTTP_NO_CACHE));
-        pResponse->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
-        pRequest->send(pResponse);
-    #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-    }
-
-    void responseTextHtml(AsyncWebServerRequest *pRequest, const MemoryBlock2 *pBlocks,
-        unsigned int countOfBlocks)
-    {
-    #if ( USING_ESP32_S2 || USING_ESP32_C3 )
-        pRequest->send(200, WM_HTTP_HEAD_CT, page);
-
-        // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-        delay(1);
-    #else
-        AsyncWebServerResponse *pResponse = pRequest->beginChunkedResponse(WM_HTTP_HEAD_CT,
-            [pBlocks, countOfBlocks](uint8_t *pBuffer, size_t bufLen, size_t index) -> size_t
-        {
-            return SendMemoryBlock(pBlocks, countOfBlocks, pBuffer, bufLen, index);
-        });
-        pResponse->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
-
-    #if USING_CORS_FEATURE
-        // For configuring CORS Header, default to WM_HTTP_CORS_ALLOW_ALL = "*"
-        pRequest->addHeader(FPSTR(WM_HTTP_CORS), _CORS_Header);
-    #endif
-
-        pResponse->addHeader(FPSTR(WM_HTTP_PRAGMA), FPSTR(WM_HTTP_NO_CACHE));
-        pResponse->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
-        pRequest->send(pResponse);
-    #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-    }
-
-    void responseApplJson(AsyncWebServerRequest *pRequest, const String& page)
-    {
-    #if ( USING_ESP32_S2 || USING_ESP32_C3 )
-        pRequest->send(200, WM_HTTP_HEAD_CT, page);
-
-        // Fix ESP32-S2 issue with WebServer (https://github.com/espressif/arduino-esp32/issues/4348)
-        delay(1);
-    #else
-
-        AsyncWebServerResponse *pResponse = pRequest->beginResponse(200, WM_HTTP_HEAD_JSON, page);
-        pResponse->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
-
-    #if USING_CORS_FEATURE
-        pResponse->addHeader(FPSTR(WM_HTTP_CORS), _CORS_Header);
-    #endif
-
-        pResponse->addHeader(FPSTR(WM_HTTP_PRAGMA), FPSTR(WM_HTTP_NO_CACHE));
-        pResponse->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
-        pRequest->send(pResponse);
-    #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-    }
 };
 // PK
 //////////////////////////////////////////
@@ -451,10 +216,10 @@ namespace {
 
 ESPAsync_WMParameter::ESPAsync_WMParameter(const char *custom)
 {
-    _WMParam_data._id = NULL;
-    _WMParam_data._placeholder = NULL;
+    _WMParam_data._id = nullptr;
+    _WMParam_data._placeholder = nullptr;
     _WMParam_data._length = 0;
-    _WMParam_data._value = NULL;
+    _WMParam_data._value = nullptr;
     _WMParam_data._labelPlacement = WFM_LABEL_BEFORE;
 
     _customHTML = custom;
@@ -930,27 +695,32 @@ void ESPAsync_WiFiManager::attacheHandlers(ArRequestFilterFunction filterFn)
     using namespace std::placeholders;  // for _1, _2, _3..
 
     _server->on("/", std::bind(&ESPAsync_WiFiManager::handleRoot, this, _1)).setFilter(filterFn);
-    _server->on("/settings", std::bind(&ESPAsync_WiFiManager::handleSettings, this, _1)).setFilter(filterFn);
-    _server->on("/settingssave", std::bind(&ESPAsync_WiFiManager::handleSettingsSave, this, _1)).setFilter(filterFn);
+    _server->on("/wifisave", std::bind(&ESPAsync_WiFiManager::handleWiFiSave, this, _1)).setFilter(filterFn);
     _server->on("/close",   std::bind(&ESPAsync_WiFiManager::handleServerClose, this, _1)).setFilter(filterFn);
     _server->on("/i",       std::bind(&ESPAsync_WiFiManager::handleInfo, this, _1)).setFilter(filterFn);
     _server->on("/r",       std::bind(&ESPAsync_WiFiManager::handleReset, this, _1)).setFilter(filterFn);
-    _server->on("/state",   std::bind(&ESPAsync_WiFiManager::handleState, this, _1)).setFilter(filterFn);
+    _server->on("/sq",   std::bind(&ESPAsync_WiFiManager::handleSystemQuery, this, _1)).setFilter(filterFn);
     _server->on("/scan",    std::bind(&ESPAsync_WiFiManager::handleScan, this, _1)).setFilter(filterFn);
     // OTA update handlers
-    _server->on("/update",  std::bind(&ESPAsync_WiFiManager::handleOTAUpdate, this, _1)).setFilter(filterFn);
     _server->on("/ota/start", std::bind(&ESPAsync_WiFiManager::handleOTAUpdateStart, this, _1)).setFilter(filterFn);
-    _server->on("/ota/upload", HTTP_POST, 
+    _server->on("/ota/upload", HTTP_POST,
         std::bind(&ESPAsync_WiFiManager::handleOTAUpdateUpload, this, _1),
         std::bind(&ESPAsync_WiFiManager::handleOTAUpdateUploadFile, this, _1, _2, _3, _4, _5, _6));
-                                      
+#ifdef WM_REMOTE_UPDATE
+    _server->on("/ota/remote-check",
+        std::bind(&ESPAsync_WiFiManager::handleOTARemoteCheck, this, _1)).setFilter(filterFn);
+    _server->on("/ota/remote-start",
+        std::bind(&ESPAsync_WiFiManager::handleOTARemoteStart, this, _1)).setFilter(filterFn);
+#endif
 
     //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
     _server->on("/fwlink",   std::bind(&ESPAsync_WiFiManager::handleRoot, this, _1)).setFilter(filterFn);
 
-#if WM_SUPPORT_TRAIN_CONTROL
+#ifdef WM_SUPPORT_TRAIN_CONTROL
     _server->on("/tcontrol",   std::bind(&ESPAsync_WiFiManager::handleTrainControl, this, _1)).setFilter(filterFn);
 #endif
+
+    attachCustomHandlers(filterFn);
 
     _server->onNotFound (std::bind(&ESPAsync_WiFiManager::handleNotFound, this, _1));
 }
@@ -962,6 +732,8 @@ String ESPAsync_WiFiManager::networkListAsString()
 {
     String pager;
 
+    LOGDEBUG1(F("ESPAsync_WiFiManager::networkListAsString: _wifiSSIDCount="), _wifiSSIDCount);
+ 
     //display networks in page
     for (int i = 0; i < _wifiSSIDCount; i++)
     {
@@ -1251,8 +1023,123 @@ void ESPAsync_WiFiManager::criticalLoop()
 
 // Anything that doesn't access WiFi, ESP or EEPROM can go here
 
+#ifdef WM_REMOTE_UPDATE
+
+static String _jsonExtractString(const String& json, const String& key) {
+    int ki = json.indexOf("\"" + key + "\"");
+    if (ki < 0) return "";
+    int ci = json.indexOf(':', ki);
+    if (ci < 0) return "";
+    int q1 = json.indexOf('"', ci + 1);
+    if (q1 < 0) return "";
+    int q2 = json.indexOf('"', q1 + 1);
+    if (q2 < 0) return "";
+    return json.substring(q1 + 1, q2);
+}
+
+static String _jsonExtractObject(const String& json, const String& key) {
+    int ki = json.indexOf("\"" + key + "\"");
+    if (ki < 0) return "{}";
+    int ob = json.indexOf('{', ki);
+    if (ob < 0) return "{}";
+    int depth = 0, i = ob;
+    for (; i < (int)json.length(); ++i) {
+        if      (json[i] == '{') ++depth;
+        else if (json[i] == '}') { if (--depth == 0) break; }
+    }
+    return json.substring(ob, i + 1);
+}
+
+
+void ESPAsync_WiFiManager::handleOTARemoteCheck(AsyncWebServerRequest *request) {
+    if (!request->hasArg("url")) {
+        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"error\":\"Missing url\"}"));
+        return;
+    }
+    WiFiClientSecure client;
+    client.setInsecure();
+    HTTPClient http;
+    if (!http.begin(client, request->arg("url"))) {
+        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"error\":\"HTTP begin failed\"}"));
+        return;
+    }
+    int code = http.GET();
+    if (code != HTTP_CODE_OK) {
+        http.end();
+        ESPAsync_WiFiManagerUtils::responseApplJson(request,
+            "{\"error\":\"HTTP " + String(code) + "\"}");
+        return;
+    }
+    String body = http.getString();
+    http.end();
+
+    String remHwid   = _jsonExtractString(body, "hwid");
+    String localHwid = (_hardwareId != nullptr) ? String(FPSTR(_hardwareId)) : String("");
+    if (localHwid.length() > 0 && remHwid != localHwid) {
+        ESPAsync_WiFiManagerUtils::responseApplJson(request,
+            "{\"error\":\"Hardware ID mismatch\","
+            "\"remote\":\"" + remHwid + "\","
+            "\"local\":\"" + localHwid + "\"}");
+        return;
+    }
+
+    String remVerStr       = _jsonExtractString(body, "version");
+    SemanticVersion remVer = SemanticVersion::fromString(remVerStr);
+    SemanticVersion localVer = { SW_MAJOR_VERSION, SW_MINOR_VERSION, SW_PATCH_VERSION };
+    String fwJson          = _jsonExtractObject(body, "firmwares");
+    bool isNewer           = (remVer > localVer);
+    bool isSameVer         = (remVerStr == F(IOT_SW_VERSION_STRING));
+    bool canSwitch         = isSameVer && (fwJson.length() > 2);
+
+    ESPAsync_WiFiManagerUtils::responseApplJson(request,
+        "{\"available\":"  + String(isNewer   ? "true" : "false") +
+        ",\"canSwitch\":"  + String(canSwitch ? "true" : "false") +
+        ",\"version\":\""  + remVerStr + "\"" +
+        ",\"current\":\""  IOT_SW_VERSION_STRING "\"" +
+        ",\"lang\":\""     IOT_LANGUAGE_STRING "\"" +
+        ",\"firmwares\":"  + fwJson + "}");
+}
+
+void ESPAsync_WiFiManager::handleOTARemoteStart(AsyncWebServerRequest *request) {
+    if (!request->hasArg("url")) {
+        request->send(400, "text/plain", "Missing url");
+        return;
+    }
+    _pendingRemoteUrl     = request->arg("url");
+    _pendingRemoteStartMs = millis() + 1000;
+
+    if (_preOTAUpdateCallback) _preOTAUpdateCallback();
+
+    request->send(200, "text/plain", "Remote update scheduled");
+}
+
+#endif  // WM_REMOTE_UPDATE
+
 void ESPAsync_WiFiManager::safeLoop()
 {
+#ifdef WM_REMOTE_UPDATE
+    if (_pendingRemoteUrl.length() > 0 && millis() >= _pendingRemoteStartMs) {
+        String url = _pendingRemoteUrl;
+        _pendingRemoteUrl = "";
+
+        WiFiClientSecure client;
+        client.setInsecure();
+
+        ESPhttpUpdate.onProgress([this](int cur, int total) {
+            if (_progressOTAUpdateCallback)
+                _progressOTAUpdateCallback((size_t)cur, (size_t)total);
+        });
+
+        t_httpUpdate_return ret = ESPhttpUpdate.update(client, url);
+        bool success = (ret == HTTP_UPDATE_OK);
+
+        if (_postOTAUpdateCallback) _postOTAUpdateCallback(success);
+        if (success && _auto_reboot) {
+            _reboot_request_millis = millis();
+            _reboot = true;
+        }
+    }
+#endif
 }
 
 ///////////////////////////////////////////////////////////
@@ -1310,26 +1197,26 @@ bool ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *apP
         //
         if ( _scannow == -1 || ( millis() > _scannow + TIME_BETWEEN_MODAL_SCANS) )
         {
-          LOGDEBUG(F("startConfigPortal: About to modal scan"));
+            LOGDEBUG(F("startConfigPortal: About to modal scan"));
 
-          // since we are modal, we can scan every time
-          _shouldscan = true;
+            // since we are modal, we can scan every time
+            _shouldscan = true;
 
-    #if defined(ESP8266)
-          // we might still be connecting, so that has to stop for scanning
-          ETS_UART_INTR_DISABLE ();
-          wifi_station_disconnect ();
-          ETS_UART_INTR_ENABLE ();
-    #else
-          WiFi.disconnect (false);
-    #endif
+        #if defined(ESP8266)
+            // we might still be connecting, so that has to stop for scanning
+            ETS_UART_INTR_DISABLE ();
+            wifi_station_disconnect ();
+            ETS_UART_INTR_ENABLE ();
+        #else
+            WiFi.disconnect (false);
+        #endif
 
-          scan();
+            scan();
 
-          //if (_tryConnectDuringConfigPortal)
-          //  WiFi.begin(); // try to reconnect to AP
+            //if (_tryConnectDuringConfigPortal)
+            //  WiFi.begin(); // try to reconnect to AP
 
-          _scannow = millis() ;
+            _scannow = millis() ;
         }
 
     #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
@@ -1387,6 +1274,16 @@ bool ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *apP
             break;
         }
 
+        if (_reboot && millis() - _reboot_request_millis > 2000)
+        {
+            LOGDEBUG("startConfigPortal: OTA complete, rebooting...\n");
+            #if defined(ESP8266) || defined(ESP32)
+                ESP.restart();
+            #elif defined(TARGET_RP2040)
+                rp2040.reboot();
+            #endif
+        }
+
     #if ( defined(TIME_BETWEEN_CONFIG_PORTAL_LOOP) && (TIME_BETWEEN_CONFIG_PORTAL_LOOP > 0) )
     #if (_ESPASYNC_WIFIMGR_LOGLEVEL_ > 3)
     #warning Using delay in startConfigPortal loop
@@ -1411,12 +1308,12 @@ bool ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *apP
         LOGERROR1("Timed out connection result:", getStatus(connRes));
     }
 
-  #if !( USING_ESP32_S2 || USING_ESP32_C3 )
-      _server->reset();
-      _dnsServer->stop();
-  #endif
+    #if !( USING_ESP32_S2 || USING_ESP32_C3 )
+        _server->reset();
+        _dnsServer->stop();
+    #endif
 
-      return  (WiFi.status() == WL_CONNECTED);
+    return  (WiFi.status() == WL_CONNECTED);
 }
 
 //////////////////////////////////////////
@@ -1457,7 +1354,7 @@ void ESPAsync_WiFiManager::setWifiStaticIP()
     }
     else
     {
-      LOGWARN(F("Can't use Custom STA IP/GW/Subnet"));
+        LOGWARN(F("Can't use Custom STA IP/GW/Subnet"));
     }
 
 #else
@@ -1520,31 +1417,29 @@ int ESPAsync_WiFiManager::connectWifi(const String& ssid, const String& pass)
         if (ssid != "")
             resetSettings();
 
-      #ifdef ESP8266
-          setWifiStaticIP();
-      #endif
+    #ifdef ESP8266
+        setWifiStaticIP();
+    #endif
 
-          WiFi.mode(WIFI_AP_STA); //It will start in station mode if it was previously in AP mode.
+        WiFi.mode(WIFI_AP_STA); //It will start in station mode if it was previously in AP mode.
 
-          setHostname();
+        setHostname();
 
           // KH, Fix ESP32 staticIP after exiting CP
-      #ifdef ESP32
-          setWifiStaticIP();
-      #endif
+    #ifdef ESP32
+        setWifiStaticIP();
+    #endif
 
         if (ssid != "")
         {
             // Start Wifi with new values.
             LOGWARN(F("Connect to new WiFi using new IP parameters"));
-
             WiFi.begin(ssid.c_str(), pass.c_str());
         }
         else
         {
             // Start Wifi with old values.
             LOGWARN(F("Connect to previous WiFi using new IP parameters"));
-
             WiFi.begin();
         }
     }
@@ -1609,12 +1504,11 @@ wl_status_t ESPAsync_WiFiManager::waitForConnectResult()
                 LOGERROR(F("Connection timed out"));
             }
 
-      #if ( ESP8266 && (USING_ESP8266_CORE_VERSION >= 30000) )
-
+        #if (ESP8266 && (USING_ESP8266_CORE_VERSION >= 30000))
             if (status == WL_CONNECTED || status == WL_CONNECT_FAILED || status == WL_WRONG_PASSWORD)
-      #else
+        #else
             if (status == WL_CONNECTED || status == WL_CONNECT_FAILED)
-      #endif
+        #endif
             {
                 keepConnecting = false;
             }
@@ -1872,21 +1766,21 @@ void ESPAsync_WiFiManager::reportStatus(String& page)
 
 //////////////////////////////////////////
 
-// Handle root or redirect to captive portal
-/*
-void ESPAsync_WiFiManager::handleRoot(AsyncWebServerRequest *request)
+
+void ESPAsync_WiFiManager::handleRoot(AsyncWebServerRequest *pRequest)
 {
-    LOGDEBUG(F("Handle root"));
+    LOGDEBUG(F("handleRoot"));
 
     // Disable _configPortalTimeout when someone accessing Portal to give some time to config
     _configPortalTimeout = 0;
 
-    if (captivePortal(request))
+    if (captivePortal(pRequest))
     {
         // If captive portal redirect instead of displaying the error page.
         return;
     }
 
+    /*
     String page = FPSTR(WM_HTTP_HEAD_START);
     String headTitle = _apName;
     if (WiFi_SSID() != "")
@@ -1903,321 +1797,26 @@ void ESPAsync_WiFiManager::handleRoot(AsyncWebServerRequest *request)
             headTitle += "</s>";
         }
     }
-
-    String body(FPSTR(WM_PK_HTTP_FLDSET_START));
-    body += FPSTR(WM_PK_HTTP_PORTAL_OPTIONS);
-    String configurableOptions;
-#if WM_SUPPORT_TRAIN_CONTROL
+ 
+#ifdef WM_SUPPORT_TRAIN_CONTROL
     configurableOptions += FPSTR(WM_PK_HTTP_TRAIN_CONTROL_OPTION);
 #endif
-    body.replace("%{customCtrl}%", configurableOptions);
-    body += F("<div class=\"msg\">");
+    */
 
-    reportStatus(body);
-
-    body += F("</div>");
-    body += FPSTR(WM_PK_HTTP_FLDSET_END);
-
-    buildHtmlPage(page,
-        FPSTR(WM_PK_HTTP_OPTIONS_MSG),
-        FPSTR(WM_PK_HTTP_WM_SCRIPT),
-        FPSTR(WM_PK_HTTP_STYLE),
-        _customHeadElement,
-        headTitle,
-        body,
-        FPSTR(WM_HTTP_SCRIPT_NTP));
-
-    responseTextHtml(request, page);
+    ESPAsync_WiFiManagerUtils::responseText(pRequest, &gIndexHtml);
 }
-*/
-
-//////////////////////////////////////////
-
-void ESPAsync_WiFiManager::handleRoot(AsyncWebServerRequest *request)
-{
-    LOGDEBUG(F("Handle root"));
-
-    // Disable _configPortalTimeout when someone accessing Portal to give some time to config
-    _configPortalTimeout = 0;
-
-    if (captivePortal(request))
-    {
-        // If captive portal redirect instead of displaying the error page.
-        return;
-    }
-
-    String page = FPSTR(WM_HTTP_HEAD_START);
-    String headTitle = _apName;
-    if (WiFi_SSID() != "")
-    {
-        if (WiFi.status() == WL_CONNECTED)
-        {
-            headTitle += " on ";
-            headTitle += WiFi_SSID();
-        }
-        else
-        {
-            headTitle += " <s>on ";
-            headTitle += WiFi_SSID();
-            headTitle += "</s>";
-        }
-    }
-
-    String body(FPSTR(WM_PK_HTTP_FLDSET_START));
-    body += FPSTR(WM_PK_HTTP_PORTAL_OPTIONS);
-    String configurableOptions;
-#if WM_SUPPORT_TRAIN_CONTROL
-    configurableOptions += FPSTR(WM_PK_HTTP_TRAIN_CONTROL_OPTION);
-#endif
-    body.replace("%{customCtrl}%", configurableOptions);
-    body += F("<div class=\"msg\">");
-
-    reportStatus(body);
-
-    body += F("</div>");
-    body += FPSTR(WM_PK_HTTP_FLDSET_END);
-
-    buildHtmlPage(page,
-        FPSTR(WM_PK_HTTP_OPTIONS_MSG),
-        FPSTR(WM_PK_HTTP_WM_SCRIPT),
-        FPSTR(WM_PK_HTTP_STYLE),
-        _customHeadElement,
-        headTitle,
-        body,
-        FPSTR(WM_HTTP_SCRIPT_NTP));
-
-    responseTextHtml(request, page);
-}
-
-//////////////////////////////////////////
-
-
-// Wifi config page handler
-void ESPAsync_WiFiManager::handleSettings(AsyncWebServerRequest *request)
-{
-    LOGDEBUG(F("Handle Settings"));
-
-    // Disable _configPortalTimeout when someone accessing Portal to give some time to config
-    _configPortalTimeout = 0;
-
-    String body;
-
-#if !( USING_ESP32_S2 || USING_ESP32_C3 )
-
-    _wifiSSIDscan = false;
-    LOGDEBUG(F("handleWifi: Scan done"));
-
-    if (_wifiSSIDCount == 0)
-    {
-        LOGDEBUG(F("handleWifi: No network found"));
-
-        body += F("No network found. Refresh to scan again.");
-    }
-    else
-    {
-        body += FPSTR(WM_PK_HTTP_FLDSET_START);
-
-        //display networks in page
-        body += networkListAsString();
-
-        body += FPSTR(WM_PK_HTTP_FLDSET_END);
-        body += "<br/>";
-    }
-
-    _wifiSSIDscan = true;
-
-#endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
-
-    body += "<small>*Hint: To reuse the saved WiFi credentials, leave SSID and PWD fields empty</small>";
-
-    body += FPSTR(WM_PK_HTTP_FORM_SETTINGS_START);
-    body.replace("%{action}%", "wifisave");
-
-#if DISPLAY_STORED_CREDENTIALS_IN_CP
-    // Populate SSIDs and PWDs if valid
-    body.replace("%{ssid}%", _ssid);
-    body.replace("%{pwd}%",  _pass);
-    body.replace("%{ssid1}%", _ssid1);
-    body.replace("%{pwd1}%", _pass1);
-#endif
-
-#if WM_SUPPORT_MQTT
-    body += FPSTR(WM_PK_HTTP_FORM_MQTT_SETTINGS);
-
-#if DISPLAY_STORED_CREDENTIALS_IN_CP
-    // Populate SSIDs and PWDs if valid
-    body.replace("%{mqttserv}%", "");
-    body.replace("%{mqttport}%", "");
-    body.replace("%{mqttuser}%", "");
-    body.replace("%{mqttpwd}%", "");
-#endif
-
-#endif
-
-
-    char parLength[2];
-
-    // add the extra parameters to the form
-    for (int i = 0; i < _paramsCount; i++)
-    {
-        if (_params[i] == NULL)
-        {
-          break;
-        }
-
-        String pitem;
-
-        switch (_params[i]->getLabelPlacement())
-        {
-          case WFM_LABEL_BEFORE:
-            pitem = FPSTR(WM_PK_HTTP_FORM_LABEL_BEFORE);
-            break;
-
-          case WFM_LABEL_AFTER:
-            pitem = FPSTR(WM_PK_HTTP_FORM_LABEL_AFTER);
-            break;
-
-          default:
-            // WFM_NO_LABEL
-            pitem = FPSTR(WM_PK_HTTP_FORM_PARAM);
-            break;
-        }
-
-        if (_params[i]->getID() != NULL)
-        {
-          pitem.replace("%{i}%", _params[i]->getID());
-          pitem.replace("%{n}%", _params[i]->getID());
-          pitem.replace("%{p}%", _params[i]->getPlaceholder());
-
-          snprintf(parLength, 2, "%d", _params[i]->getValueLength());
-
-          pitem.replace("%{l}%", parLength);
-          pitem.replace("%{v}%", _params[i]->getValue());
-          pitem.replace("%{c}%", _params[i]->getCustomHTML());
-        }
-        else
-        {
-          pitem = _params[i]->getCustomHTML();
-        }
-
-        body += pitem;
-    }
-
-    if (_params[0] != NULL)
-    {
-        body += "<br/>";
-    }
-
-    LOGDEBUG1(F("Static IP ="), _WiFi_STA_IPconfig._sta_static_ip.toString());
-
-    // KH, Comment out to permit changing from DHCP to static IP, or vice versa
-    // and add staticIP label in CP
-
-    // To permit disable/enable StaticIP configuration in Config Portal from sketch. Valid only if DHCP is used.
-    // You'll loose the feature of dynamically changing from DHCP to static IP, or vice versa
-    // You have to explicitly specify false to disable the feature.
-
-    String staticIPInputs;
-
-  #if !USE_STATIC_IP_CONFIG_IN_CP
-
-    if (_WiFi_STA_IPconfig._sta_static_ip)
-  #endif
-    {
-        String item = FPSTR(WM_PK_HTTP_FORM_LABEL);
-
-        item += FPSTR(WM_PK_HTTP_FORM_PARAM);
-
-        item.replace("%{i}%", "ip");
-        item.replace("%{n}%", "ip");
-        item.replace("%{p}%", "Static IP");
-        item.replace("%{l}%", "15");
-        item.replace("%{v}%", _WiFi_STA_IPconfig._sta_static_ip.toString());
-
-        staticIPInputs = item;
-
-        item = FPSTR(WM_PK_HTTP_FORM_LABEL);
-        item += FPSTR(WM_PK_HTTP_FORM_PARAM);
-
-        item.replace("%{i}%", "gw");
-        item.replace("%{n}%", "gw");
-        item.replace("%{p}%", "Gateway IP");
-        item.replace("%{l}%", "15");
-        item.replace("%{v}%", _WiFi_STA_IPconfig._sta_static_gw.toString());
-
-        staticIPInputs += item;
-
-        item = FPSTR(WM_PK_HTTP_FORM_LABEL);
-        item += FPSTR(WM_PK_HTTP_FORM_PARAM);
-
-        item.replace("%{i}%", "sn");
-        item.replace("%{n}%", "sn");
-        item.replace("%{p}%", "Subnet");
-        item.replace("%{l}%", "15");
-        item.replace("%{v}%", _WiFi_STA_IPconfig._sta_static_sn.toString());
-
-
-    #if USE_CONFIGURABLE_DNS
-        //***** Added for DNS address options *****
-        staticIPInputs += item;
-    
-        item = FPSTR(WM_HTTP_FORM_LABEL);
-        item += FPSTR(WM_HTTP_FORM_PARAM);
-
-        item.replace("%{i}%", "dns1");
-        item.replace("%{n}%", "dns1");
-        item.replace("%{p}%", "DNS1 IP");
-        item.replace("%{l}%", "15");
-        item.replace("%{v}%", _WiFi_STA_IPconfig._sta_static_dns1.toString());
-
-        staticIPInputs += item;
-
-        item = FPSTR(WM_PK_HTTP_FORM_LABEL);
-        item += FPSTR(WM_PK_HTTP_FORM_PARAM);
-
-        item.replace("%{i}%", "dns2");
-        item.replace("%{n}%", "dns2");
-        item.replace("%{p}%", "DNS2 IP");
-        item.replace("%{l}%", "15");
-        item.replace("%{v}%", _WiFi_STA_IPconfig._sta_static_dns2.toString());
-        //***** End added for DNS address options *****
-    #endif
-
-        staticIPInputs += item;
-    }
-
-    body.replace("%{staticIP}%", staticIPInputs);
-
-    body += FPSTR(WM_HTTP_SCRIPT_NTP_HIDDEN);
-    body += FPSTR(WM_PK_HTTP_FORM_SETTINGS_END);
-
-    String page;
-    buildHtmlPage(page,
-        FPSTR(WM_PK_HTTP_SETTINGS_MSG),
-        FPSTR(WM_PK_HTTP_WM_SCRIPT),
-        FPSTR(WM_PK_HTTP_STYLE),
-        _customHeadElement,
-        FPSTR(WM_PK_HTTP_SETTINGS_MSG),
-        body,
-        FPSTR(WM_HTTP_SCRIPT_NTP));
-
-    responseTextHtml(request, page);
-    LOGDEBUG(F("Sent config page"));
-}
-
-//////////////////////////////////////////
 
 // Handle the WLAN save form and redirect to WLAN config page again
-void ESPAsync_WiFiManager::handleSettingsSave(AsyncWebServerRequest *request)
+inline void ESPAsync_WiFiManager::handleWiFiSave(AsyncWebServerRequest *request)
 {
-    LOGDEBUG(F("Settings save"));
+    LOGDEBUG(F("ESPAsync_WiFiManager::handleWiFiSave"));
 
     //SAVE/_connect here
-    _ssid = request->arg("s").c_str();
-    _pass = request->arg("p").c_str();
+    _ssid = request->arg("ssid1").c_str();
+    _pass = request->arg("pwd1").c_str();
 
-    _ssid1 = request->arg("s1").c_str();
-    _pass1 = request->arg("p1").c_str();
+    _ssid1 = request->arg("ssid2").c_str();
+    _pass1 = request->arg("pwd2").c_str();
 
     ///////////////////////
 
@@ -2255,27 +1854,27 @@ void ESPAsync_WiFiManager::handleSettingsSave(AsyncWebServerRequest *request)
         LOGDEBUG2(F("Parameter and value :"), _params[i]->getID(), value);
     }
 
-    if (request->hasArg("ip"))
+    if (request->hasArg("staticip1"))
     {
-        String ip = request->arg("ip");
+        String ip = request->arg("staticip1");
 
         optionalIPFromString(&_WiFi_STA_IPconfig._sta_static_ip, ip.c_str());
 
         LOGDEBUG1(F("New Static IP ="), _WiFi_STA_IPconfig._sta_static_ip.toString());
     }
 
-    if (request->hasArg("gw"))
+    if (request->hasArg("staticgw1"))
     {
-        String gw = request->arg("gw");
+        String gw = request->arg("staticgw1");
 
         optionalIPFromString(&_WiFi_STA_IPconfig._sta_static_gw, gw.c_str());
 
         LOGDEBUG1(F("New Static Gateway ="), _WiFi_STA_IPconfig._sta_static_gw.toString());
     }
 
-    if (request->hasArg("sn"))
+    if (request->hasArg("staticsubnet1"))
     {
-        String sn = request->arg("sn");
+        String sn = request->arg("staticsubnet1");
 
         optionalIPFromString(&_WiFi_STA_IPconfig._sta_static_sn, sn.c_str());
 
@@ -2323,7 +1922,7 @@ void ESPAsync_WiFiManager::handleSettingsSave(AsyncWebServerRequest *request)
 
 
     //LOGDEBUG1(F("page ="), page);
-    responseTextHtml(request, page);
+    ESPAsync_WiFiManagerUtils::responseTextHtml(request, page);
     LOGDEBUG(F("Sent wifi save page"));
 
     _connect = true; //signal ready to _connect/reset
@@ -2332,7 +1931,7 @@ void ESPAsync_WiFiManager::handleSettingsSave(AsyncWebServerRequest *request)
 //////////////////////////////////////////
 
 // Handle shut down the _server page
-void ESPAsync_WiFiManager::handleServerClose(AsyncWebServerRequest *request)
+inline void ESPAsync_WiFiManager::handleServerClose(AsyncWebServerRequest *request)
 {
     LOGDEBUG(F("Server Close"));
 
@@ -2352,7 +1951,7 @@ void ESPAsync_WiFiManager::handleServerClose(AsyncWebServerRequest *request)
         body,
         "");
 
-    responseTextHtml(request, page);
+    ESPAsync_WiFiManagerUtils::responseTextHtml(request, page);
 
     _stopConfigPortal = true; //signal ready to shutdown config portal
 
@@ -2446,7 +2045,7 @@ void ESPAsync_WiFiManager::handleInfo(AsyncWebServerRequest *request)
         body,
         WM_HTTP_SCRIPT_NTP);
 
-    responseTextHtml(request, page);
+    ESPAsync_WiFiManagerUtils::responseTextHtml(request, page);
 
     LOGDEBUG(F("Info page sent"));
 }
@@ -2454,37 +2053,66 @@ void ESPAsync_WiFiManager::handleInfo(AsyncWebServerRequest *request)
 //////////////////////////////////////////
 
 // Handle the state page
-void ESPAsync_WiFiManager::handleState(AsyncWebServerRequest *request)
+inline void ESPAsync_WiFiManager::handleSystemQuery(AsyncWebServerRequest *request)
 {
-    LOGDEBUG(F("State-Json"));
+    LOGDEBUG(F("ESPAsync_WiFiManager::handleSystemQuery"));
 
-    String page = F("{\"Soft_AP_IP\":\"");
-
-    page += WiFi.softAPIP().toString();
-    page += F("\",\"Soft_AP_MAC\":\"");
-    page += WiFi.softAPmacAddress();
-    page += F("\",\"Station_IP\":\"");
-    page += WiFi.localIP().toString();
-    page += F("\",\"Station_MAC\":\"");
-    page += WiFi.macAddress();
-    page += F("\",");
-
-    if (WiFi.psk() != "")
+    if (handleCustomSystemQuery(request))
     {
-      page += F("\"Password\":true,");
+        LOGDEBUG(F("ESPAsync_WiFiManager::handleSystemQuery: Handled by user custom handler"));
+        return;
+    }
+
+    String page;
+
+    if (request->hasArg("dx"))
+    {
+        String dx = request->arg("dx");
+
+        if (dx == "status")
+        {
+            page = JSONUtils::EncloseObject(
+                JSONUtils::Pair(F("Soft_AP_IP"),  WiFi.softAPIP().toString(), true) +
+                JSONUtils::Pair(F("Soft_AP_MAC"), WiFi.softAPmacAddress()) +
+                JSONUtils::Pair(F("Station_IP"), WiFi.localIP().toString()) +
+                JSONUtils::Pair(F("Station_MAC"), WiFi.macAddress()) +
+                JSONUtils::Pair(F("SSID"), WiFi_SSID()) +
+                JSONUtils::Pair(F("Password"), (WiFi.psk() != "") ? true : false));
+        }
+        else if(dx == "hwinfo")
+        {
+            page = JSONUtils::EncloseArray(
+            #ifdef ESP8266
+                JSONUtils::NameValueRow(F("Chip ID"), String(ESP.getFlashChipId(), HEX), true) +
+                JSONUtils::NameValueRow(F("IDE Flash Size"), ESP.getFlashChipSize()) +
+                JSONUtils::NameValueRow(F("Real Flash Size"), ESP.getFlashChipRealSize()) +
+            #else
+                // TODO
+                JSONUtils::NameValueRow(F("Chip ID"), "---", true) +
+                JSONUtils::NameValueRow(F("IDE Flash Size"), ESP.getFlashChipSize()) +
+                // TODO
+                JSONUtils::NameValueRow(F("Real Flash Size"), "---") +
+            #endif
+
+                JSONUtils::NameValueRow(F("Access Point IP"), WiFi.softAPIP().toString()) +
+                JSONUtils::NameValueRow(F("Access Point MAC"), WiFi.softAPmacAddress()) +
+                JSONUtils::NameValueRow(F("SSID"), WiFi_SSID()) +
+                JSONUtils::NameValueRow(F("Station IP"), WiFi.localIP().toString()) +
+                JSONUtils::NameValueRow(F("Station MAC"), WiFi.macAddress()));
+        }
+        else
+        {
+            LOGDEBUG(F("ESPAsync_WiFiManager::handleSystemQuery: Unsupported value of parameter dx"));
+            page = JSONUtils::EncloseObject("");
+        }
     }
     else
     {
-      page += F("\"Password\":false,");
+        page = JSONUtils::EncloseObject(JSONUtils::Pair(F("Error"), F("DX argument missing."), true));
     }
 
-    page += F("\"SSID\":\"");
-    page += WiFi_SSID();
-    page += F("\"}");
 
-    responseApplJson(request, page);
-
-    LOGDEBUG(F("Sent state page in json format"));
+    ESPAsync_WiFiManagerUtils::responseApplJson(request, page);
 }
 
 //////////////////////////////////////////
@@ -2499,16 +2127,12 @@ void ESPAsync_WiFiManager::handleScan(AsyncWebServerRequest *request)
 
     LOGDEBUG(F("Scan-Json"));
 
-    String page = F("{\"Access_Points\":[");
-
+     String jsonStr;
     // KH, display networks in page using previously scan results
     for (int i = 0; i < _wifiSSIDCount; i++)
     {
         if (_wifiSSIDs[i].duplicate == true)
             continue; // skip dups
-
-        if (i != 0)
-            page += F(", ");
 
         LOGDEBUG1(F("Index ="), i);
         LOGDEBUG1(F("SSID ="), _wifiSSIDs[i].SSID);
@@ -2518,28 +2142,34 @@ void ESPAsync_WiFiManager::handleScan(AsyncWebServerRequest *request)
 
         if (_minimumQuality == -1 || _minimumQuality < quality)
         {
+            // {\"SSID\":\"%{v}%\", \"Encryption\":%{i}%, \"Quality\":\"%{r}%\"}
             String item = FPSTR(WM_PK_JSON_ITEM);
             String rssiQ;
 
             rssiQ += quality;
-            item.replace("%{v}%", _wifiSSIDs[i].SSID);
-            item.replace("%{r}%", rssiQ);
+            bool encryption = false;
 
         #if defined(ESP8266)
-
             if (_wifiSSIDs[i].encryptionType != ENC_TYPE_NONE)
         #else
             if (_wifiSSIDs[i].encryptionType != WIFI_AUTH_OPEN)
         #endif
             {
-                item.replace("%{i}%", "true");
-            }
-            else
-            {
-                item.replace("%{i}%", "false");
+                encryption = true;
             }
 
-            page += item;
+            String row = JSONUtils::EncloseObject(
+                            JSONUtils::Pair(F("SSID"), _wifiSSIDs[i].SSID, true) +
+                            JSONUtils::Pair(F("Encryption"), encryption) +
+                            JSONUtils::Pair(F("Quality"), String(rssiQ))
+                     );
+
+            if (!jsonStr.isEmpty())
+            {
+                jsonStr += JSONUtils::ItemSeparator();
+            }
+
+            jsonStr += row;
             delay(0);
         }
         else
@@ -2548,9 +2178,9 @@ void ESPAsync_WiFiManager::handleScan(AsyncWebServerRequest *request)
         }
     }
 
-    page += F("]}");
+    jsonStr = JSONUtils::EncloseObject(JSONUtils::Pair(F("Access_Points"), jsonStr, true));
 
-    responseApplJson(request, page);
+    ESPAsync_WiFiManagerUtils::responseApplJson(request, jsonStr);
 
     LOGDEBUG(F("Sent WiFiScan Data in Json format"));
 }
@@ -2562,42 +2192,17 @@ void ESPAsync_WiFiManager::handleReset(AsyncWebServerRequest *request)
 {
     LOGDEBUG(F("Reset"));
 
-    String body(FPSTR(WM_PK_HTTP_RESETTING_MSG));
-    String page;
-    buildHtmlPage(page,
-        FPSTR(WM_PK_HTTP_WIFI_INFORMATION_MSG),
-        FPSTR(WM_PK_HTTP_WM_SCRIPT),
-        FPSTR(WM_PK_HTTP_STYLE),
-        _customHeadElement,
-        "",
-        body,
-        "");
+    // Redirect browser to root so it is no longer on /r when the device reboots.
+    // Without this the browser retries /r after reconnect, causing an infinite restart loop.
+    request->redirect("/");
 
-    responseTextHtml(request, page);
-
-    LOGDEBUG(F("Sent reset page"));
-    delay(5000);
-
-    // Temporary fix for issue of not clearing WiFi SSID/PW from flash of ESP32
-    // See https://github.com/khoih-prog/ESP_WiFiManager/issues/25 and https://github.com/espressif/arduino-esp32/issues/400
-    resetSettings();
-    //WiFi.disconnect(true); // Wipe out WiFi credentials.
-    //////
+    delay(2000);
 
 #ifdef ESP8266
     ESP.reset();
 #else   //ESP32
     ESP.restart();
 #endif
-
-    delay(2000);
-}
-
-void ESPAsync_WiFiManager::handleOTAUpdate(AsyncWebServerRequest *pRequest)
-{
-    LOGDEBUG(F("handleUpdate"));
-
-    responseTextHtml(pRequest, gUpdateOTAHtml, ARRAY_LENGTH(gUpdateOTAHtml));
 }
 
 void ESPAsync_WiFiManager::handleOTAUpdateStart(AsyncWebServerRequest *pRequest)
@@ -2607,10 +2212,33 @@ void ESPAsync_WiFiManager::handleOTAUpdateStart(AsyncWebServerRequest *pRequest)
     {
         String hash = pRequest->getParam("hash")->value();
         LOGDEBUG(String("MD5: "+hash+"\n").c_str());
+        if (_hardwareId)
+        {
+            if (!pRequest->hasParam("hwid"))
+            {
+                LOGDEBUG(F("ERROR: HWID missing\n"));
+                return pRequest->send(400, "text/plain", "Missing parameter!");
+            }
+
+            String hwid = pRequest->getParam("hwid")->value();
+            LOGDEBUG(String("HWID: "+hwid+"\n").c_str());
+            String current_hwid = String(_hardwareId);
+            if (hwid != current_hwid)
+            {
+                LOGDEBUG(F("ERROR: HWID not valid\n"));
+                return pRequest->send(200, "text/plain", "HWID is not valid. Selected firmware is not for this device!");
+            }
+        }
+        else
+        {
+            LOGDEBUG(F("ERROR: HWID missing\n"));
+            return pRequest->send(400, "text/plain", "Missing parameter!");
+        }
+
         if (!Update.setMD5(hash.c_str()))
         {
             LOGDEBUG(F("ERROR: MD5 hash not valid\n"));
-            return pRequest->send(400, "text/plain", "MD5 parameter invalid");
+            return pRequest->send(400, "text/plain", "MD5 parameter is invalid!");
         }
     }
 
@@ -2720,29 +2348,33 @@ void ESPAsync_WiFiManager::handleOTAUpdateUploadFile(AsyncWebServerRequest *requ
     }
 }
 
-//////////////////////////////////////////
-
-void ESPAsync_WiFiManager::handleNotFound(AsyncWebServerRequest *request)
+void ESPAsync_WiFiManager::handleNotFound(AsyncWebServerRequest *pRequest)
 {
-    if (captivePortal(request))
+    if (captivePortal(pRequest))
     {
         // If captive portal redirect instead of displaying the error page.
+        return;
+    }
+
+    if (handleStaticFileRequest(pRequest))
+    {
+        // If static file request handled, return.
         return;
     }
 
     String message = "File Not Found\n\n";
 
     message += "URI: ";
-    message += request->url();
+    message += pRequest->url();
     message += "\nMethod: ";
-    message += (request->method() == HTTP_GET) ? "GET" : "POST";
+    message += (pRequest->method() == HTTP_GET) ? "GET" : "POST";
     message += "\nArguments: ";
-    message += request->args();
+    message += pRequest->args();
     message += "\n";
 
-    for (uint8_t i = 0; i < request->args(); i++)
+    for (uint8_t i = 0; i < pRequest->args(); i++)
     {
-        message += " " + request->argName(i) + ": " + request->arg(i) + "\n";
+        message += " " + pRequest->argName(i) + ": " + pRequest->arg(i) + "\n";
     }
 
 #if ( USING_ESP32_S2 || USING_ESP32_C3 )
@@ -2752,14 +2384,16 @@ void ESPAsync_WiFiManager::handleNotFound(AsyncWebServerRequest *request)
     delay(1);
 #else
 
-    AsyncWebServerResponse *response = request->beginResponse( 404, WM_HTTP_HEAD_CT2, message );
+    AsyncWebServerResponse *pResponse = pRequest->beginResponse( 404, WM_HTTP_HEAD_CT_TEXT_PLAIN, message );
 
-    response->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
-    response->addHeader(FPSTR(WM_HTTP_PRAGMA), FPSTR(WM_HTTP_NO_CACHE));
-    response->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
+    pResponse->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
+    pResponse->addHeader(FPSTR(WM_HTTP_PRAGMA), FPSTR(WM_HTTP_NO_CACHE));
+    pResponse->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
 
-    request->send(response);
+    pRequest->send(pResponse);
 #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
+
+    LOGWARN1(F("ESPAsync_WiFiManager::handleNotFound: "), message);
 }
 
 //////////////////////////////////////////
@@ -2776,7 +2410,7 @@ bool ESPAsync_WiFiManager::captivePortal(AsyncWebServerRequest *request)
         LOGINFO(F("Request redirected to captive portal"));
         LOGINFO1(F("Location http://"), toStringIp(request->client()->localIP()));
 
-        AsyncWebServerResponse *response = request->beginResponse(302, WM_HTTP_HEAD_CT2, "");
+        AsyncWebServerResponse *response = request->beginResponse(302, WM_HTTP_HEAD_CT_TEXT_PLAIN, "");
 
         response->addHeader("Location", String("http://") + toStringIp(request->client()->localIP()));
 
@@ -2899,10 +2533,56 @@ void ESPAsync_WiFiManager::onOTAEnd(std::function<void(bool success)> callable)
     _postOTAUpdateCallback = callable;
 }
 
+inline void ESPAsync_WiFiManager::attachCustomHandlers(ArRequestFilterFunction /*filter*/)
+{}
+
+bool ESPAsync_WiFiManager::handleStaticFileRequest(AsyncWebServerRequest *pRequest)
+{
+    const static std::map<String, const HTTPResponseBlock*> handlerMap =
+    {
+        // HTML pages
+        { "/ota", &gOTAHtml },
+        { "/info", &gInfoHtml },
+        { "/index", &gIndexHtml },
+        { "/wifi", &gWiFiHtml },
+    #ifdef WM_SUPPORT_HOME_ASSISTANT
+        { "/mqtt", &gMQTTHtml },
+    #endif
+    
+        // CSS styles
+        { "/style.css", &gStyleCSS },
+
+        // JS scripts
+        { "/ota.js", &gOTAJS },
+        { "/utils.js", &gUtilsJS },
+        { "/md5_utils.js", &gMD5UtilsJS },
+        { "/module_polyfill.js", &gModulePolyfillJS },
+        { "/restart.js", &gRestartJS },
+#ifdef WM_REMOTE_UPDATE
+        { "/ota-remote.js", &gOTARemoteJS }
+#endif
+    };
+
+    auto it = handlerMap.find(pRequest->url());
+    if (it == handlerMap.end())
+    {
+        return false;
+    }
+
+    LOGDEBUG1(F("ESPAsync_WiFiManager::handleStaticFileRequest: ulr="), pRequest->url());
+
+    ESPAsync_WiFiManagerUtils::responseText(pRequest, it->second);
+    return true;
+}
+
+inline bool ESPAsync_WiFiManager::handleCustomSystemQuery(AsyncWebServerRequest *request)
+{
+    return false;
+}
 
 //////////////////////////////////////////
 
-#if WM_SUPPORT_TRAIN_CONTROL
+#ifdef WM_SUPPORT_TRAIN_CONTROL
 void ESPAsync_WiFiManager::handleTrainControl(AsyncWebServerRequest *pRequest)
 {
     LOGDEBUG(F("Handle train control"));
@@ -2925,7 +2605,7 @@ void ESPAsync_WiFiManager::handleTrainControl(AsyncWebServerRequest *pRequest)
         delay(1);
     #else
 
-        AsyncWebServerResponse *pResponse = pRequest->beginResponse(200, WM_HTTP_HEAD_JSON, page);
+        AsyncWebServerResponse *pResponse = pRequest->beginResponse(200, WM_HTTP_HEAD_CT_JSON, page);
         pResponse->addHeader(FPSTR(WM_HTTP_CACHE_CONTROL), FPSTR(WM_HTTP_NO_STORE));
 
     #if USING_CORS_FEATURE
@@ -2943,7 +2623,7 @@ void ESPAsync_WiFiManager::handleTrainControl(AsyncWebServerRequest *pRequest)
         return;
     }
 
-    responseTextHtml(pRequest, gTrainControlHtml, ARRAY_LENGTH(gTrainControlHtml));
+    ESPAsync_WiFiManagerUtils::responseText(pRequest, &gTrainControlHtmlBlockResponse);
 }
 
 #endif
