@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width,initial-scale=1'>
+    <title><!--L_OTA_TITLE-->OTA Update</title>
+    <link rel='stylesheet' href='style.css'>
+    <script src='module_polyfill.js'></script>
+    <script type='module' src='ota.js'></script>
+</head>
+<body>
+    <div class='container'>
+        <h1><!--L_OTA_HEADING-->Firmware OTA Update</h1>
+
+        <div class='btncol' aria-live='polite'>
+            <button id='selFile' class='mainbtn' type='button'><!--L_OTA_SELECT_FILE-->Select File</button>
+            <span id='fwName' class='fname'><!--L_OTA_NO_FILE_CHOSEN-->No file chosen</span>
+            <input class='hidden' type='file' id='fileInput' name='firmware' accept='.bin,.bin.gz' onchange='onFileInput(files)'>
+
+            <div id='fileProps' class='meta-wrap hidden' aria-hidden='false'>
+                <div class='meta-item'>
+                    <div class='meta-label'><!--L_OTA_FILESIZE_LABEL-->Filesize:</div>
+                    <div id='filesize' class='meta-val'></div>
+                </div>
+                <div class='meta-item'>
+                    <div class='meta-label'><!--L_OTA_FIRMWARE_VERSION_LABEL-->Firmware version:</div>
+                    <div id='fmver' class='meta-val'></div>
+                </div>
+                <div class='meta-item'>
+                    <div class='meta-label'><!--L_OTA_HARDWARE_ID_LABEL-->Hardware ID:</div>
+                    <div id='hwid' class='meta-val'></div>
+                </div>
+                <div class='meta-item'>
+                    <div class='meta-label'><!--L_OTA_LANGUAGE_LABEL-->Language:</div>
+                    <div id='fmlang' class='meta-val'></div>
+                </div>
+            </div>
+        </div>
+
+        <div class='btncol hidden' id='progRow'>
+          <div class='progwrap'>
+            <progress id='otaProg' class='prog' value='0' max='100'></progress>
+            <div id='otaProgTxt' class='prog-txt'>0%</div>
+          </div>
+          <div id='progInfo' class='meta-val'><!--L_OTA_UPLOADING_FILE-->Uploading file.</div>
+        </div>
+
+        <div id='errRow' class='row-center hidden' >
+            <svg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='red-txt'><path d='m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z'/><path d='M12 9v4'/><path d='M12 17h.01'/></svg>
+            <div id='err' class='meta-val'></div>
+        </div>
+
+        <div id='successRow' class='row-center hidden' >
+            <svg xmlns='http://www.w3.org/2000/svg' width='42' height='42' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='green-txt'><path d='M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z'/><path d='m9 12 2 2 4-4'/></svg>
+            <div id='success' class='meta-val'></div>
+        </div>
+
+        <div class='row-center'>
+            <button id='updateBtn' class='formbtn' disabled><!--L_OTA_UPLOAD_UPDATE-->Upload & Update</button>
+            <a class='formbtn secbtn' id='back' href='./'><!--L_GENERAL_BACK-->Back</a>
+        </div>
+
+        <div id='otaStatus' class='muted center-txt' style='margin-top:0.625rem;'><!--L_OTA_STATUS_HINT-->Select a firmware file (.bin) and press Upload & Update.</div>
+
+        <hr>
+        <h2><!--L_OTA_REMOTE_HEADING-->Remote Update</h2>
+        <div class='btncol'>
+            <div>
+                <label class='flbl' for='remoteUrl'><!--L_OTA_REMOTE_URL_LABEL-->Update server URL:</label>
+                <input class='finp' type='text' id='remoteUrl' value='<!--D_IOT_OTA_UPDATE_URL-->'>
+            </div>
+            <button id='checkRemoteBtn' class='mainbtn' type='button'><!--L_OTA_REMOTE_CHECK_BTN-->Check for Update</button>
+        </div>
+        <div id='remoteStatus' class='muted center-txt' style='margin-top:0.625rem;'><!--L_OTA_REMOTE_STATUS_HINT-->Enter the update server URL and press Check for Update.</div>
+        <script type='module' src='ota-remote.js'></script>
+    </div>
+  </body>
+</html>

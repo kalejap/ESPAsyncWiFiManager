@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title><!--L_WIFI_CONFIGURATION-->WiFi Configuration</title>
+  <link rel='stylesheet' href='style.css'>
+  <script src='module_polyfill.js'></script>
+  <script type='module'>
+    // Import necessary utilities
+    import { gebi, qsa, u2f } from './utils.js';
+
+    // Get all password toggle buttons
+    //const toggleButtons = document.querySelectorAll('.toggle-password');
+    const toggleButtons = qsa('.toggle-password');
+
+    // Original event listener logic adapted for module structure
+    document.addEventListener('DOMContentLoaded', () => {
+
+        // Iterate over each button and attach the click listener
+        toggleButtons.forEach(button => {
+          button.addEventListener('click', function() {
+            // Get the ID of the target input from the data-target attribute
+            const targetId = this.getAttribute('data-target');
+            const passwordInput = gebi(targetId);
+
+            if (passwordInput) {
+                // Toggle the type attribute
+                const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
+                passwordInput.setAttribute('type', type);
+                
+                // Toggle the button icon
+                this.textContent = type === 'password' ? '👁️' : '🔒';
+            }
+          });
+        });
+    });
+    
+  window.onload = () => {
+     u2f('./sq?dx=wifi');
+  };
+
+  </script>
+</head>
+<body>
+  <div class='container'>
+    <h1><!--L_WIFI_CONFIGURATION-->WiFi Configuration</h1>
+    <form class='formsec' method='POST' action='./wifi'>
+      <h2><!--L_WIFI_PRIMARY_NETWORK-->Primary Network</h2>
+      <div>
+        <label class='flbl' for='ssid1'><!--L_WIFI_SSID_1-->SSID 1</label>
+        <input class='finp' type='text' id='ssid1' name='ssid1' required aria-label='WiFi SSID'>
+      </div>
+      <div>
+        <label class='flbl' for='pwd1'><!--L_WIFI_PASSWORD_1-->Password 1</label>
+        <div class='password-wrapper'>
+          <input class='finp password-input' type='password' id='pwd1' name='pwd1' aria-label='WiFi Password'>
+          <button type='button' class='toggle-password' id='toggle_p' data-target='pwd1' aria-label='Toggle password 1 visibility'>👁️</button>
+        </div>
+      </div>
+      <div class='muted'><!--L_WIFI_OPEN_NETWORK_HINT-->Leave password empty for open networks.</div>
+      <hr>
+      <h2><!--L_WIFI_ALT_NETWORK-->Alternative Network (Optional)</h2>
+      <div>
+        <label class='flbl' for='ssid2'><!--L_WIFI_SSID_2-->SSID 2</label>
+        <input class='finp' type='text' id='ssid2' name='ssid2' required aria-label='WiFi SSID'>
+      </div>
+      <div>
+        <label class='flbl' for='pwd2'><!--L_WIFI_PASSWORD_2-->Password 2</label>
+        <div class='password-wrapper'>
+          <input class='finp password-input' type='password' id='pwd2' name='pwd2' aria-label='WiFi Password'>
+          <button type='button' class='toggle-password' id='toggle_pwd1' data-target='pwd2' aria-label='Toggle password 2 visibility'>👁️</button>
+        </div>
+      </div>
+      <div class='muted'><!--L_WIFI_OPEN_NETWORK_HINT-->Leave password empty for open networks.</div>
+
+      <div class='row-center'>
+        <button class='formbtn' type='submit'><!--L_WIFI_SAVE-->Save WiFi</button>
+        <a class='formbtn secbtn' href='/'><!--L_GENERAL_BACK-->Back</a>
+      </div>
+    </form>
+  </div>
+</body>
+</html>
