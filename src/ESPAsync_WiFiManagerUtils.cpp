@@ -6,6 +6,7 @@
 */
 
 #include "ESPAsync_WiFiManagerUtils.h"
+#include "WiFiManagerLangResources.h"
 
 // Definition of global variable for HTML headers to prevent caching
 const HTTPHeaderItem gHTMLHeaderItems[] = {
@@ -284,6 +285,43 @@ namespace ESPAsync_WiFiManagerUtils {
         pResponse->addHeader(FPSTR(WM_HTTP_EXPIRES), "-1");
         pRequest->send(pResponse);
     #endif    // ( USING_ESP32_S2 || USING_ESP32_C3 )
+    }
+
+    static HTTPMemoryBlockItem gCustomIndexChunks[3] = {
+        { nullptr, FPSTR(WM_PK_INDEX_HTML_PART1), strlen_P((PGM_P)WM_PK_INDEX_HTML_PART1) },
+        { nullptr, nullptr, 0 },
+        { nullptr, FPSTR(WM_PK_INDEX_HTML_PART2), strlen_P((PGM_P)WM_PK_INDEX_HTML_PART2) },
+    };
+    static const HTTPMemoryBlock gCustomIndexBlock = { gCustomIndexChunks, 3 };
+    static const HTTPResponseBlock gCustomIndexPage = {
+        FPSTR(WM_HTTP_HEAD_CT_TEXT_HTML), &gCustomIndexBlock, &gHTMLHeaders
+    };
+
+    const HTTPResponseBlock* getCustomIndexPage(PGM_P pCustomButtons)
+    {
+        gCustomIndexChunks[1].pPMemBlock =
+            reinterpret_cast<const __FlashStringHelper*>(pCustomButtons);
+        gCustomIndexChunks[1].size = pCustomButtons ? strlen_P(pCustomButtons) : 0;
+        return &gCustomIndexPage;
+    }
+
+    static HTTPMemoryBlockItem gCustomSettingsChunks[4] = {
+        { nullptr, FPSTR(WM_PK_SETTINGS_HTML_PART1), strlen_P((PGM_P)WM_PK_SETTINGS_HTML_PART1) },
+        { nullptr, FPSTR(WM_PK_SETTINGS_OPT_BTNS),   strlen_P((PGM_P)WM_PK_SETTINGS_OPT_BTNS)   },
+        { nullptr, nullptr, 0 },
+        { nullptr, FPSTR(WM_PK_SETTINGS_HTML_PART2), strlen_P((PGM_P)WM_PK_SETTINGS_HTML_PART2) },
+    };
+    static const HTTPMemoryBlock gCustomSettingsBlock = { gCustomSettingsChunks, 4 };
+    static const HTTPResponseBlock gCustomSettingsPage = {
+        FPSTR(WM_HTTP_HEAD_CT_TEXT_HTML), &gCustomSettingsBlock, &gHTMLHeaders
+    };
+
+    const HTTPResponseBlock* getSettingsPage(PGM_P pCustomButtons)
+    {
+        gCustomSettingsChunks[2].pPMemBlock =
+            reinterpret_cast<const __FlashStringHelper*>(pCustomButtons);
+        gCustomSettingsChunks[2].size = pCustomButtons ? strlen_P(pCustomButtons) : 0;
+        return &gCustomSettingsPage;
     }
 
 } // namespace ESPAsync_WiFiManagerUtils

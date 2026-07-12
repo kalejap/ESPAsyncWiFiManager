@@ -170,6 +170,15 @@ namespace ESPAsync_WiFiManagerUtils {
 
     // Utility function to respond with static content and specified content type
     void responseText(AsyncWebServerRequest *pRequest, const HTTPResponseBlock2 *pBlock);
+
+    // Composes index page from WM_PK_INDEX_HTML_PART1 + pCustomButtons (PROGMEM, may be nullptr)
+    // + WM_PK_INDEX_HTML_PART2. Returns pointer to a static HTTPResponseBlock.
+    // Safe on single-threaded Arduino: static storage updated before each response starts.
+    const HTTPResponseBlock* getCustomIndexPage(PGM_P pCustomButtons);
+
+    // Composes settings page from WM_PK_SETTINGS_HTML_PART1 + pCustomButtons (PROGMEM, may be nullptr)
+    // + WM_PK_SETTINGS_HTML_PART2. Returns pointer to a static HTTPResponseBlock.
+    const HTTPResponseBlock* getSettingsPage(PGM_P pCustomButtons);
 }
 
 #endif // ESPAsync_WiFiManagerUtils_h

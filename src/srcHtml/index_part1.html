@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang='en'>
+<head>
+  <meta charset='UTF-8'>
+  <meta name='viewport' content='width=device-width, initial-scale=1.0'>
+  <title><!--D_IOT_APPLICATION_TITLE-->IoT Device Control</title>
+  <link rel='stylesheet' href='style.css'>
+  <script src='module_polyfill.js'></script>
+  <script src='hw-status.js'></script>
+</head>
+<body>
+  <div class='container'>
+  <h1><!--D_IOT_APPLICATION_TITLE-->IoT Device Control</h1>
+    <table class='sttbl' style='margin-bottom:1rem'>
+      <thead><tr><th><!--L_STATUS_SENSOR-->Sensor</th><th><!--L_STATUS_VALUE-->Value</th><th><!--L_STATUS_UNIT-->Unit</th></tr></thead>
+      <tbody id='hw-st-body'>
+        <tr><td colspan='3' style='text-align:center;color:var(--muted)'><!--L_STATUS_LOADING-->Loading…</td></tr>
+      </tbody>
+    </table>
+    <div class='btncol'>
+      <a class='mainbtn' href='/info'><!--L_INFORMATION_3DOTS-->Status</a>
+      <a class='mainbtn' href='/settings'><!--L_SETTINGS_3DOTS-->Settings...</a>

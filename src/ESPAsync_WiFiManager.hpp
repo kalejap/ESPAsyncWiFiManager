@@ -630,6 +630,7 @@ public:
     void          onOTAStart(std::function<void()> callable);
     void          onOTAProgress(std::function<void(size_t current, size_t final)> callable);
     void          onOTAEnd(std::function<void(bool success)> callable);
+    void          onPreReboot(std::function<void()> callable);
 
 
 #if USE_CONFIGURABLE_DNS
@@ -658,7 +659,15 @@ public:
     //TODO
     //if this is set, customise style
     void          setCustomHeadElement(const char* element);
-    
+
+    // Set PROGMEM pointer to extra <a class='mainbtn'> button(s) injected after the Settings
+    // button on the index page. Pass nullptr to show only the default button.
+    void          setCustomIndexButtons(PGM_P p) { _pCustomIndexButtons = p; }
+
+    // Set PROGMEM pointer to extra <a class='mainbtn'> button(s) injected between the OTA
+    // and Restart buttons on the /settings page. Pass nullptr to show only the default buttons.
+    void          setCustomSettingsButtons(PGM_P p) { _pCustomSettingsButtons = p; }
+
     //if this is true, remove duplicated Access Points - defaut true
     void          setRemoveDuplicateAPs(bool removeDuplicates);
 
@@ -921,6 +930,7 @@ private:
     String        networkListAsString();
     
     void          handleRoot(AsyncWebServerRequest *request);
+    void          handleSettings(AsyncWebServerRequest *request);
     void          handleWiFiSave(AsyncWebServerRequest *request);
     void          handleServerClose(AsyncWebServerRequest *request);
     void          handleInfo(AsyncWebServerRequest *request);
@@ -936,6 +946,7 @@ private:
 #ifdef WM_REMOTE_UPDATE
     void          handleOTARemoteCheck(AsyncWebServerRequest *request);
     void          handleOTARemoteStart(AsyncWebServerRequest *request);
+    void          handleOTARemoteProgress(AsyncWebServerRequest *request);
 #endif
 
     bool          captivePortal(AsyncWebServerRequest *request);   
@@ -1023,6 +1034,8 @@ private:
     bool                    _tryWPS = false;
 
     const char*             _customHeadElement = "";
+    PGM_P                   _pCustomIndexButtons = nullptr;
+    PGM_P                   _pCustomSettingsButtons = nullptr;
     int                     _status = WL_IDLE_STATUS;
     
     // For configuring CORS Header, default to WM_HTTP_CORS_ALLOW_ALL = "*"
@@ -1059,10 +1072,17 @@ private:
     std::function<void()>   _preOTAUpdateCallback = nullptr;
     std::function<void(size_t current, size_t final)> _progressOTAUpdateCallback = nullptr;
     std::function<void(bool success)> _postOTAUpdateCallback = nullptr;
+    std::function<void()>   _preRebootCallback = nullptr;
 
 #ifdef WM_REMOTE_UPDATE
     String   _pendingRemoteUrl;
     uint32_t _pendingRemoteStartMs = 0;
+    String   _pendingCheckUrl;
+    String   _checkResult;
+    uint8_t  _checkState = 0;   // 0=idle, 1=pending, 2=done
+    int      _remoteOtaProgress = 0;  // 0-100; -1 = failed
+    size_t   _remoteOtaCurrent  = 0;
+    size_t   _remoteOtaTotal    = 0;
 #endif
 
 

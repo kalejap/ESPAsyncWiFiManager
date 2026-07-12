@@ -29,6 +29,60 @@
             }
         },
         {
+            "var": "%WM_PK_INDEX_HTML_PART1%",
+            "comment": "Index page part 1 — up to custom button injection point",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "index_part1.html"
+            }
+        },
+        {
+            "var": "%WM_PK_INDEX_HTML_PART2%",
+            "comment": "Index page part 2 — closing btncol to end",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "index_part2.html"
+            }
+        },
+        {
+            "var": "%WM_PK_SETTINGS_HTML_PART1%",
+            "comment": "Settings page part 1 — head through OTA button, no MQTT (used when WM_SUPPORT_HOME_ASSISTANT is not defined)",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "settings_part1.html"
+            }
+        },
+        {
+            "var": "%WM_PK_BTN_MQTT%",
+            "comment": "MQTT button for settings OPT_BTNS — active when WM_SUPPORT_HOME_ASSISTANT",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "btn_mqtt.html"
+            }
+        },
+        {
+            "var": "%WM_PK_BTN_GEO%",
+            "comment": "Geo location button for settings OPT_BTNS — active when WM_GEO_LOCATION",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "btn_geo.html"
+            }
+        },
+        {
+            "var": "%WM_PK_SETTINGS_HTML_PART2%",
+            "comment": "Settings page part 2 — Restart + Back + footer",
+            "value": {
+                "type": "template",
+                "format": "html",
+                "template": "settings_part2.html"
+            }
+        },
+        {
             "var": "%WM_PK_WIFI_HTML%",
             "comment": "New design",
             "value": {
