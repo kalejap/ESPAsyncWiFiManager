@@ -1,0 +1,27 @@
+      <a class='mainbtn' href='/ota'><!--L_FIRMWARE_UPDATE_3DOTS-->Firmware Update...</a>
+      <a class='mainbtn' href='#' id='rstBtn'><!--L_RESTART_3DOTS-->Restart...</a>
+    </div>
+
+    <script type='module'>
+      import { showConfirmModal, showRestartModal } from './restart.js';
+      document.getElementById('rstBtn').addEventListener('click', function(e) {
+        e.preventDefault();
+        showConfirmModal(function() {
+          fetch('/r');
+          showRestartModal(10, /*L_RESTART_IN_PROGRESS*/'Restart in progress...');
+        });
+      });
+    </script>
+
+    <div class='row-center'>
+      <a class='formbtn secbtn' href='/'><!--L_GENERAL_BACK-->Back</a>
+    </div>
+
+    <footer class='ftr'>
+      <hr>
+      <div class='ftr-line'><!--D_IOT_COPYRIGHT-->&copy; 2025 Kalejap</div>
+      <div class='ftr-line' id='fwVer'>Firmware: <!--D_IOT_SW_VERSION_STRING-->v1.0.3</div>
+    </footer>
+  </div>
+</body>
+</html>

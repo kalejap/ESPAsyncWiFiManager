@@ -69,12 +69,19 @@ WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gMD5UtilsJS, WM_PK_MD5_UTILS_JS);
 WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gModulePolyfillJS, WM_PK_MODULE_POLYFILL_JS);
 // restart.js
 WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gRestartJS, WM_PK_RESTART_JS);
+// hw-status.js
+WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gHWStatusJS, WM_PK_HW_STATUS_JS);
 #ifdef WM_REMOTE_UPDATE
 #include <ESP8266WiFi.h>
+#if defined(ESP8266)
 #include <ESP8266HTTPClient.h>
+#else
+#include <HTTPClient.h>
+#endif
 #include <ESP8266httpUpdate.h>
 #include <WiFiClientSecure.h>
 #include <IoTDevice.h>
+#include <Updater.h>
 WM_DEFINE_STATIC_JS_FILE_AS_SINGLE_BLOCK(gOTARemoteJS, WM_PK_OTA_REMOTE_JS);
 #endif
 
@@ -103,39 +110,6 @@ const HTTPResponseBlock gTrainControlHtmlBlockResponse = {
 //////////////////////////////////////////
 // PK
 namespace {
-/*
-    void buildHtmlPage(String& page,
-        const __FlashStringHelper *pTitle,
-        const __FlashStringHelper *pScript,
-        const __FlashStringHelper *pStyle,
-        const String& customHeadElem,
-        const String& headTitle,
-        const String& body,
-        const String& optScriptElem = "")
-    {
-        LOGDEBUG(F("buildHtmlPage (start)"));
-
-        size_t sz = STRLEN_P(pTitle) + STRLEN_P(pScript) + STRLEN_P(pStyle) + customHeadElem.length() +
-            headTitle.length() + body.length() + optScriptElem.length() + STRLEN_P(FPSTR(WM_PK_HTTP_HTML));
-
-        page.reserve(sz);
-        LOGDEBUG1("buildHtmlPage: calc capacity", sz);
-        page += FPSTR(WM_PK_HTTP_HTML);
-        //LOGDEBUG1("buildHtmlPage: calc capacity", page.capacity());
-        page.replace(F("%{body}%"), body);
-        LOGDEBUG("buildHtmlPage: after {body}");
-        page.replace(F("%{customHeadElem}%"), customHeadElem);
-        page.replace(F("%{optScriptElem}%"), optScriptElem);
-        page.replace(F("%{headTitle}%"), headTitle);
-        REPLACE_P(page, F("%{title}%"), pTitle);
-        LOGDEBUG("buildHtmlPage: before {script}");
-        REPLACE_P(page, F("%{script}%"), pScript);
-        LOGDEBUG("buildHtmlPage: after {script}");
-        REPLACE_P(page, F("%{style}%"), pStyle);
-        LOGDEBUG("buildHtmlPage: after {style}");
-    }
-*/
-
     void buildHtmlPage(String& page,
         const __FlashStringHelper *pTitle,
         const __FlashStringHelper *pScript,
@@ -193,20 +167,6 @@ namespace {
         page += FPSTR(WM_PK_HTML_FOOT);
 
         LOGDEBUG1("buildHtmlPage2: length: ", page.length());
-
-        /*
-        page.replace(F("%{body}%"), body);
-        LOGDEBUG("buildHtmlPage: after {body}");
-        page.replace(F("%{customHeadElem}%"), customHeadElem);
-        page.replace(F("%{optScriptElem}%"), optScriptElem);
-        page.replace(F("%{headTitle}%"), headTitle);
-        REPLACE_P(page, F("%{title}%"), pTitle);
-        LOGDEBUG("buildHtmlPage: before {script}");
-        REPLACE_P(page, F("%{script}%"), pScript);
-        LOGDEBUG("buildHtmlPage: after {script}");
-        REPLACE_P(page, F("%{style}%"), pStyle);
-        LOGDEBUG("buildHtmlPage: after {style}");
-        */
     }
 };
 // PK
@@ -695,6 +655,7 @@ void ESPAsync_WiFiManager::attacheHandlers(ArRequestFilterFunction filterFn)
     using namespace std::placeholders;  // for _1, _2, _3..
 
     _server->on("/", std::bind(&ESPAsync_WiFiManager::handleRoot, this, _1)).setFilter(filterFn);
+    _server->on("/settings", std::bind(&ESPAsync_WiFiManager::handleSettings, this, _1)).setFilter(filterFn);
     _server->on("/wifisave", std::bind(&ESPAsync_WiFiManager::handleWiFiSave, this, _1)).setFilter(filterFn);
     _server->on("/close",   std::bind(&ESPAsync_WiFiManager::handleServerClose, this, _1)).setFilter(filterFn);
     _server->on("/i",       std::bind(&ESPAsync_WiFiManager::handleInfo, this, _1)).setFilter(filterFn);
@@ -711,6 +672,8 @@ void ESPAsync_WiFiManager::attacheHandlers(ArRequestFilterFunction filterFn)
         std::bind(&ESPAsync_WiFiManager::handleOTARemoteCheck, this, _1)).setFilter(filterFn);
     _server->on("/ota/remote-start",
         std::bind(&ESPAsync_WiFiManager::handleOTARemoteStart, this, _1)).setFilter(filterFn);
+    _server->on("/ota/remote-progress",
+        std::bind(&ESPAsync_WiFiManager::handleOTARemoteProgress, this, _1)).setFilter(filterFn);
 #endif
 
     //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
@@ -1005,10 +968,16 @@ void ESPAsync_WiFiManager::criticalLoop()
         }
     }
 
-    // Check if 2 seconds have passed since _reboot_request_millis was set
-    if (_reboot && millis() - _reboot_request_millis > 2000)
+    // Wait 5 seconds after OTA completes before rebooting so the browser can
+    // receive at least a couple of 100% progress responses before the device
+    // goes offline.
+    if (_reboot && millis() - _reboot_request_millis > 5000)
     {
         LOGDEBUG("Rebooting...\n");
+        if (_preRebootCallback)
+        {
+            _preRebootCallback();
+        }
         #if defined(ESP8266) || defined(ESP32)
             ESP.restart();
         #elif defined(TARGET_RP2040)
@@ -1052,52 +1021,22 @@ static String _jsonExtractObject(const String& json, const String& key) {
 
 
 void ESPAsync_WiFiManager::handleOTARemoteCheck(AsyncWebServerRequest *request) {
-    if (!request->hasArg("url")) {
-        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"error\":\"Missing url\"}"));
+    if (request->hasArg("url")) {
+        _pendingCheckUrl = request->arg("url");
+        _checkState = 1;
+        LOGDEBUG1(F("ESPAsync_WiFiManager::handleOTARemoteCheck url ="), _pendingCheckUrl);
+        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"status\":\"pending\"}"));
         return;
     }
-    WiFiClientSecure client;
-    client.setInsecure();
-    HTTPClient http;
-    if (!http.begin(client, request->arg("url"))) {
-        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"error\":\"HTTP begin failed\"}"));
-        return;
+    // Status-poll (no url arg)
+    if (_checkState == 1) {
+        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"status\":\"pending\"}"));
+    } else if (_checkState == 2) {
+        _checkState = 0;
+        ESPAsync_WiFiManagerUtils::responseApplJson(request, _checkResult);
+    } else {
+        ESPAsync_WiFiManagerUtils::responseApplJson(request, F("{\"error\":\"No check in progress\"}"));
     }
-    int code = http.GET();
-    if (code != HTTP_CODE_OK) {
-        http.end();
-        ESPAsync_WiFiManagerUtils::responseApplJson(request,
-            "{\"error\":\"HTTP " + String(code) + "\"}");
-        return;
-    }
-    String body = http.getString();
-    http.end();
-
-    String remHwid   = _jsonExtractString(body, "hwid");
-    String localHwid = (_hardwareId != nullptr) ? String(FPSTR(_hardwareId)) : String("");
-    if (localHwid.length() > 0 && remHwid != localHwid) {
-        ESPAsync_WiFiManagerUtils::responseApplJson(request,
-            "{\"error\":\"Hardware ID mismatch\","
-            "\"remote\":\"" + remHwid + "\","
-            "\"local\":\"" + localHwid + "\"}");
-        return;
-    }
-
-    String remVerStr       = _jsonExtractString(body, "version");
-    SemanticVersion remVer = SemanticVersion::fromString(remVerStr);
-    SemanticVersion localVer = { SW_MAJOR_VERSION, SW_MINOR_VERSION, SW_PATCH_VERSION };
-    String fwJson          = _jsonExtractObject(body, "firmwares");
-    bool isNewer           = (remVer > localVer);
-    bool isSameVer         = (remVerStr == F(IOT_SW_VERSION_STRING));
-    bool canSwitch         = isSameVer && (fwJson.length() > 2);
-
-    ESPAsync_WiFiManagerUtils::responseApplJson(request,
-        "{\"available\":"  + String(isNewer   ? "true" : "false") +
-        ",\"canSwitch\":"  + String(canSwitch ? "true" : "false") +
-        ",\"version\":\""  + remVerStr + "\"" +
-        ",\"current\":\""  IOT_SW_VERSION_STRING "\"" +
-        ",\"lang\":\""     IOT_LANGUAGE_STRING "\"" +
-        ",\"firmwares\":"  + fwJson + "}");
 }
 
 void ESPAsync_WiFiManager::handleOTARemoteStart(AsyncWebServerRequest *request) {
@@ -1105,6 +1044,8 @@ void ESPAsync_WiFiManager::handleOTARemoteStart(AsyncWebServerRequest *request) 
         request->send(400, "text/plain", "Missing url");
         return;
     }
+
+    LOGDEBUG1(F("ESPAsync_WiFiManager::handleOTARemoteStart url ="), request->arg("url"));
     _pendingRemoteUrl     = request->arg("url");
     _pendingRemoteStartMs = millis() + 1000;
 
@@ -1113,28 +1054,270 @@ void ESPAsync_WiFiManager::handleOTARemoteStart(AsyncWebServerRequest *request) 
     request->send(200, "text/plain", "Remote update scheduled");
 }
 
+void ESPAsync_WiFiManager::handleOTARemoteProgress(AsyncWebServerRequest *request) {
+    ESPAsync_WiFiManagerUtils::responseApplJson(request,
+        "{\"progress\":"  + String(_remoteOtaProgress) +
+        ",\"current\":"   + String(_remoteOtaCurrent) +
+        ",\"total\":"     + String(_remoteOtaTotal) + "}");
+}
+
 #endif  // WM_REMOTE_UPDATE
 
 void ESPAsync_WiFiManager::safeLoop()
 {
 #ifdef WM_REMOTE_UPDATE
-    if (_pendingRemoteUrl.length() > 0 && millis() >= _pendingRemoteStartMs) {
+    if (_checkState == 1 && _pendingCheckUrl.length() > 0) {
+        String url = _pendingCheckUrl;
+        _pendingCheckUrl = "";
+
+        WiFiClientSecure secureClient;
+        WiFiClient plainClient;
+        bool isHttps = url.startsWith(F("https://"));
+        if (isHttps)
+        {
+            secureClient.setInsecure();
+            secureClient.setBufferSizes(4096, 512);
+        }
+        HTTPClient http;
+        bool httpBeginOk = isHttps ? http.begin(secureClient, url) : http.begin(plainClient, url);
+        if (!httpBeginOk)
+        {
+            _checkResult = F("{\"error\":\"HTTP begin failed\"}");
+            _checkState = 2;
+            return;
+        }
+        int code = http.GET();
+        if (code != HTTP_CODE_OK) {
+            http.end();
+            _checkResult = "{\"error\":\"HTTP " + String(code) + "\"}";
+            _checkState = 2;
+            return;
+        }
+        String body = http.getString();
+        http.end();
+
+        String remHwid   = _jsonExtractString(body, "hwid");
+        String localHwid = (_hardwareId != nullptr) ? String(FPSTR(_hardwareId)) : String("");
+        if (localHwid.length() > 0 && remHwid != localHwid) {
+            _checkResult =
+                "{\"error\":\"Hardware ID mismatch\","
+                "\"remote\":\"" + remHwid + "\","
+                "\"local\":\""  + localHwid + "\"}";
+            _checkState = 2;
+            return;
+        }
+
+        String remVerStr       = _jsonExtractString(body, "version");
+        SemanticVersion remVer = SemanticVersion::fromString(remVerStr);
+        SemanticVersion localVer = { SW_MAJOR_VERSION, SW_MINOR_VERSION, SW_PATCH_VERSION };
+        String fwJson          = _jsonExtractObject(body, "firmwares");
+        bool isNewer           = (remVer > localVer);
+        bool isSameVer         = (remVerStr == F(IOT_SW_VERSION_STRING));
+        bool canSwitch         = isSameVer && (fwJson.length() > 2);
+
+        _checkResult =
+            "{\"available\":"  + String(isNewer   ? "true" : "false") +
+            ",\"canSwitch\":"  + String(canSwitch ? "true" : "false") +
+            ",\"version\":\""  + remVerStr + "\"" +
+            ",\"current\":\""  IOT_SW_VERSION_STRING "\"" +
+            ",\"lang\":\""     IOT_LANGUAGE_STRING "\"" +
+            ",\"firmwares\":"  + fwJson + "}";
+        _checkState = 2;
+        return;
+    }
+
+    if (_pendingRemoteUrl.length() > 0 && millis() >= _pendingRemoteStartMs)
+    {
         String url = _pendingRemoteUrl;
         _pendingRemoteUrl = "";
+        bool isHttps = url.startsWith(F("https://"));
 
-        WiFiClientSecure client;
-        client.setInsecure();
+        _remoteOtaProgress = 0;
+        _remoteOtaCurrent  = 0;
+        _remoteOtaTotal    = 0;
 
-        ESPhttpUpdate.onProgress([this](int cur, int total) {
-            if (_progressOTAUpdateCallback)
-                _progressOTAUpdateCallback((size_t)cur, (size_t)total);
-        });
+        LOGDEBUG1(F("OTA free heap:"), ESP.getFreeHeap());
 
-        t_httpUpdate_return ret = ESPhttpUpdate.update(client, url);
+        t_httpUpdate_return ret = HTTP_UPDATE_FAILED;
+
+        if (!isHttps)
+        {
+            WiFiClient plainClient;
+            ESPhttpUpdate.rebootOnUpdate(false);
+            ESPhttpUpdate.onProgress([this](int cur, int total) {
+                _remoteOtaCurrent  = (size_t)cur;
+                _remoteOtaTotal    = (size_t)total;
+                _remoteOtaProgress = (total > 0) ? (int)((int64_t)cur * 100 / total) : 0;
+                if (_progressOTAUpdateCallback)
+                {
+                    _progressOTAUpdateCallback((size_t)cur, (size_t)total);
+                }
+            });
+            ret = ESPhttpUpdate.update(plainClient, url);
+            LOGDEBUG1(F("OTA result code:"), (int)ret);
+            if (ret != HTTP_UPDATE_OK)
+            {
+                LOGDEBUG1(F("OTA error:"), ESPhttpUpdate.getLastErrorString());
+            }
+        }
+        else
+        {
+            // HTTPS chunked Range download: each chunk opens a fresh
+            // WiFiClientSecure with a 4 KB BearSSL RX buffer, downloads at
+            // most CHUNK_SZ bytes, then destroys the TLS session.  Keeping
+            // each session below 212992 bytes (13 × 16384) avoids the nginx
+            // boundary where it stops honouring max_fragment_length and
+            // BearSSL's 4 KB buffer would reject the 16 KB TLS record.
+            const size_t CHUNK_SZ = 200UL * 1024UL;
+            size_t offset    = 0;
+            size_t totalSize = 0;
+            bool otaBegun    = false;
+            bool failed      = false;
+            int _lastProgressPct = -1;
+            // Shared across chunks so each subsequent handshake can be
+            // resumed (1 round-trip) instead of a full 4-way handshake.
+            BearSSL::Session tlsSession;
+
+            while (!failed)
+            {
+                WiFiClientSecure client;
+                client.setInsecure();
+                client.setBufferSizes(4096, 512);
+                client.setSession(&tlsSession);
+
+                HTTPClient http;
+                const char* crHdr[] = { "Content-Range" };
+                http.collectHeaders(crHdr, 1);
+
+                if (!http.begin(client, url))
+                {
+                    LOGDEBUG(F("OTA chunk: http.begin failed"));
+                    failed = true;
+                    break;
+                }
+
+                size_t rangeEnd = offset + CHUNK_SZ - 1;
+                http.addHeader(F("Range"),
+                    String(F("bytes=")) + offset + F("-") + rangeEnd);
+
+                int code = http.GET();
+                LOGDEBUG1(F("OTA chunk HTTP code:"), code);
+
+                if (code != HTTP_CODE_PARTIAL_CONTENT && code != HTTP_CODE_OK)
+                {
+                    http.end();
+                    failed = true;
+                    break;
+                }
+
+                if (!otaBegun)
+                {
+                    if (code == HTTP_CODE_PARTIAL_CONTENT)
+                    {
+                        String cr = http.header("Content-Range");
+                        int sl = cr.lastIndexOf('/');
+                        if (sl >= 0)
+                        {
+                            totalSize = (size_t)cr.substring(sl + 1).toInt();
+                        }
+                    }
+                    if (totalSize == 0)
+                    {
+                        totalSize = (size_t)http.getSize();
+                    }
+                    LOGDEBUG1(F("OTA total size:"), totalSize);
+                    if (totalSize == 0 || !Update.begin(totalSize, U_FLASH))
+                    {
+                        LOGDEBUG(F("OTA Update.begin failed"));
+                        http.end();
+                        failed = true;
+                        break;
+                    }
+                    _remoteOtaTotal = totalSize;
+                    otaBegun = true;
+                }
+
+                WiFiClient* tcp = http.getStreamPtr();
+                int chunkRemain = http.getSize();
+
+                // read(buf, n) copies a full BearSSL record in one call.
+                // readBytes() uses Stream's byte-by-byte timedRead() loop,
+                // which is ~4096x slower when the buffer isn't pre-filled.
+                static uint8_t buf[4096];
+                while (chunkRemain > 0)
+                {
+                    int avail = tcp->available();
+                    if (avail > 0)
+                    {
+                        int toRead = avail;
+                        if (toRead > (int)sizeof(buf)) toRead = (int)sizeof(buf);
+                        if (toRead > chunkRemain) toRead = chunkRemain;
+                        int got = tcp->read(buf, (size_t)toRead);
+                        if (got > 0)
+                        {
+                            Update.write(buf, (size_t)got);
+                            offset      += (size_t)got;
+                            chunkRemain -= got;
+                            _remoteOtaCurrent  = offset;
+                            int newPct = (int)((int64_t)offset * 100 / (int64_t)totalSize);
+                            _remoteOtaProgress = newPct;
+                            if (_progressOTAUpdateCallback && (newPct >= _lastProgressPct + 5 || newPct == 100))
+                            {
+                                _lastProgressPct = newPct;
+                                _progressOTAUpdateCallback(offset, totalSize);
+                            }
+                        }
+                    }
+                    else
+                    {
+                        if (!http.connected())
+                        {
+                            break;
+                        }
+                    }
+                    yield();
+                }
+
+                http.end();
+
+                if (Update.hasError())
+                {
+                    LOGDEBUG1(F("OTA Update error:"), Update.getError());
+                    failed = true;
+                    break;
+                }
+
+                if (offset >= totalSize)
+                {
+                    break;
+                }
+            }
+
+            bool ok = false;
+            if (!failed && otaBegun && offset >= totalSize)
+            {
+                ok = Update.end(true) && !Update.hasError();
+                LOGDEBUG1(F("OTA Update.end ok:"), ok);
+            }
+            else if (otaBegun)
+            {
+                Update.end(false);
+            }
+            LOGDEBUG1(F("OTA heap after:"), ESP.getFreeHeap());
+            ret = ok ? HTTP_UPDATE_OK : HTTP_UPDATE_FAILED;
+        }
+
         bool success = (ret == HTTP_UPDATE_OK);
-
-        if (_postOTAUpdateCallback) _postOTAUpdateCallback(success);
-        if (success && _auto_reboot) {
+        if (!success)
+        {
+            _remoteOtaProgress = -1;
+        }
+        if (_postOTAUpdateCallback)
+        {
+            _postOTAUpdateCallback(success);
+        }
+        if (success && _auto_reboot)
+        {
             _reboot_request_millis = millis();
             _reboot = true;
         }
@@ -1274,9 +1457,13 @@ bool ESPAsync_WiFiManager::startConfigPortal(char const *apName, char const *apP
             break;
         }
 
-        if (_reboot && millis() - _reboot_request_millis > 2000)
+        if (_reboot && millis() - _reboot_request_millis > 5000)
         {
             LOGDEBUG("startConfigPortal: OTA complete, rebooting...\n");
+            if (_preRebootCallback)
+            {
+                _preRebootCallback();
+            }
             #if defined(ESP8266) || defined(ESP32)
                 ESP.restart();
             #elif defined(TARGET_RP2040)
@@ -1803,7 +1990,15 @@ void ESPAsync_WiFiManager::handleRoot(AsyncWebServerRequest *pRequest)
 #endif
     */
 
-    ESPAsync_WiFiManagerUtils::responseText(pRequest, &gIndexHtml);
+    ESPAsync_WiFiManagerUtils::responseText(pRequest,
+        ESPAsync_WiFiManagerUtils::getCustomIndexPage(_pCustomIndexButtons));
+}
+
+inline void ESPAsync_WiFiManager::handleSettings(AsyncWebServerRequest* pRequest)
+{
+    LOGDEBUG(F("ESPAsync_WiFiManager::handleSettings"));
+    ESPAsync_WiFiManagerUtils::responseText(pRequest,
+        ESPAsync_WiFiManagerUtils::getSettingsPage(_pCustomSettingsButtons));
 }
 
 // Handle the WLAN save form and redirect to WLAN config page again
@@ -2196,6 +2391,10 @@ void ESPAsync_WiFiManager::handleReset(AsyncWebServerRequest *request)
     // Without this the browser retries /r after reconnect, causing an infinite restart loop.
     request->redirect("/");
 
+    if (_preRebootCallback)
+    {
+        _preRebootCallback();
+    }
     delay(2000);
 
 #ifdef ESP8266
@@ -2533,6 +2732,11 @@ void ESPAsync_WiFiManager::onOTAEnd(std::function<void(bool success)> callable)
     _postOTAUpdateCallback = callable;
 }
 
+void ESPAsync_WiFiManager::onPreReboot(std::function<void()> callable)
+{
+    _preRebootCallback = callable;
+}
+
 inline void ESPAsync_WiFiManager::attachCustomHandlers(ArRequestFilterFunction /*filter*/)
 {}
 
@@ -2558,6 +2762,7 @@ bool ESPAsync_WiFiManager::handleStaticFileRequest(AsyncWebServerRequest *pReque
         { "/md5_utils.js", &gMD5UtilsJS },
         { "/module_polyfill.js", &gModulePolyfillJS },
         { "/restart.js", &gRestartJS },
+        { "/hw-status.js", &gHWStatusJS },
 #ifdef WM_REMOTE_UPDATE
         { "/ota-remote.js", &gOTARemoteJS }
 #endif

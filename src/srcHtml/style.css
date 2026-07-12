@@ -246,25 +246,12 @@ h2 {
 .row-center-sm { margin-top: 0.5rem; display:flex; gap:0.5rem; justify-content:center; align-items:center; }
 .vis-hidden { display:none; }
 .center-txt { text-align:center; }
-.progwrap {
-  margin-top: 0.75rem; /* 12px */
-  display: flex;
-  gap: 0.5rem; /* 8px */
-  align-items: center;
-  justify-content: center;
-}
-.prog {
-  width: 60%;
-  height: 0.75rem; /* 12px */
-  appearance: none;
-  -webkit-appearance: none;
-  border-radius: 0.5rem; /* 8px */
-  overflow: hidden;
-  background: linear-gradient(90deg, rgba(25,118,210,0.06), rgba(56,224,252,0.03));
-}
-.prog::-webkit-progress-bar { background: rgba(10,30,40,0.03); }
-.prog::-webkit-progress-value { background: linear-gradient(90deg, var(--accent), var(--accent-2)); }
-.prog-txt { font-size: 0.9rem; color: var(--muted); min-width: 3rem; text-align: center; }
+.ota-ring-svg { display:block; margin: 0 auto 0.5rem; }
+.ota-ring-bg  { fill:none; stroke:rgba(25,118,210,.15); stroke-width:8; }
+.ota-ring-fg  { fill:none; stroke:#1976d2; stroke-width:8; stroke-linecap:round;
+                transform:rotate(-90deg); transform-origin:50% 50%;
+                transition:stroke-dashoffset .3s; }
+.ota-ring-pct { font-size:1.5rem; font-weight:700; color:#1976d2; }
 
 /* Table styles for status pages */
 .sttbl {
@@ -408,4 +395,20 @@ h2 {
 .modal-btn:active { opacity:0.8; }
 .modal-btn-yes { background:var(--accent); color:#fff; }
 .modal-btn-no  { background:transparent; color:var(--muted); border:0.125rem solid rgba(25,118,210,0.2); }
+
+.swbtn {
+  padding: 2px 12px;
+  cursor: pointer;
+  font-weight: 700;
+  font-size: 0.9rem;
+  border: 1px solid rgba(25,118,210,0.4);
+  background: transparent;
+  color: var(--accent);
+  transition: background 0.1s, color 0.1s;
+}
+.swbtn:first-of-type { border-radius: .3rem 0 0 .3rem; }
+.swbtn:last-of-type  { border-radius: 0 .3rem .3rem 0; margin-left: -1px; }
+.swbtn:hover         { background: rgba(25,118,210,0.08); }
+.swbtn.sw-active     { background: var(--accent); color: #fff; }
+.swbtn.sw-active:hover { background: var(--accent); }
 
