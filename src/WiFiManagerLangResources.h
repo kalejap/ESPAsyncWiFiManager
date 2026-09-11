@@ -76,6 +76,47 @@ const char WM_PK_WIFI_HTML[] PROGMEM = "<!DOCTYPE html>\n<html lang='en'>\n<head
 #ifdef WM_SUPPORT_HOME_ASSISTANT
 const char WM_PK_MQTT_HTML[] PROGMEM = "<!DOCTYPE html>\n<html lang='en'>\n<head>\n<meta charset='UTF-8'>\n<meta name='viewport' content='width=device-width,initial-scale=1'>\n<title>" L_MQTT_CONFIGURATION "</title>\n<link rel='stylesheet' href='style.css'>\n<script src='module_polyfill.js'></script>\n<script type='module'>\nimport { gebi, qsa, u2f } from './utils.js';\n\nconst toggleButtons = qsa('.toggle-password');\n\nwindow.onload = () => { u2f('./sq?dx=mqtt'); };\n\ndocument.addEventListener('DOMContentLoaded', () => {\ntoggleButtons.forEach(button => {\nbutton.addEventListener('click', function() {\nconst targetId = this.getAttribute('data-target');\nconst passwordInput = gebi(targetId);\n\nif (passwordInput) {\nconst type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';\npasswordInput.setAttribute('type', type);\nthis.textContent = type === 'password' ? '👁️' : '🔒';\n}\n});\n});\n});\n</script>\n</head>\n<body>\n<div class='container'>\n<h1 class='ttl'>" L_MQTT_CONFIGURATION "</h1>\n<form class='formsec' method='POST' action='/mqtt'>\n<div>\n<label class='flbl' for='host'>" L_MQTT_HOST "</label>\n<input class='finp' type='text' id='host' name='host' required aria-label='MQTT host'>\n</div>\n<div>\n<label class='flbl' for='port'>" L_MQTT_PORT "</label>\n<input class='finp' type='number' id='port' name='port' value='1883' required aria-label='MQTT port'>\n</div>\n<div>\n<label class='flbl' for='user'>" L_MQTT_USERNAME "</label>\n<input class='finp' type='text' id='user' name='user' aria-label='MQTT username'>\n</div>\n<div>\n<label class='flbl' for='pwd'>" L_MQTT_PASSWORD "</label>\n<div class='password-wrapper'>\n<input class='finp password-input' type='password' id='pwd' name='pwd' aria-label='MQTT Password'>\n<button type='button' class='toggle-password' id='toggle_pwd' data-target='pwd' aria-label='Toggle password visibility'>👁️</button>\n</div>\n</div>\n<div class='muted'>" L_MQTT_BROKER_HINT "</div>\n<div class='row-center'>\n<button class='formbtn' type='submit'>" L_MQTT_SAVE "</button>\n<a class='formbtn secbtn' href='/'>" L_GENERAL_BACK "</a>\n</div>\n</form>\n</div>\n</body>\n</html>\n";
 #endif
+#ifdef WM_GEO_LOCATION
+const char WM_PK_GEO_HTML[] PROGMEM =
+    "<!DOCTYPE html>\n"
+    "<html lang='en'>\n"
+    "<head>\n"
+    "<meta charset='UTF-8'>\n"
+    "<meta name='viewport' content='width=device-width, initial-scale=1.0'>\n"
+    "<title>" L_GEO_LOCATION "</title>\n"
+    "<link rel='stylesheet' href='style.css'>\n"
+    "<script src='module_polyfill.js'></script>\n"
+    "<script type='module'>\n"
+    "import { u2f } from './utils.js';\n"
+    "window.onload = () => { u2f('./sq?dx=geo'); };\n"
+    "</script>\n"
+    "</head>\n"
+    "<body>\n"
+    "<div class='container'>\n"
+    "<h1>" L_GEO_LOCATION "</h1>\n"
+    "<form class='formsec' method='POST' action='/geo'>\n"
+    "<div>\n"
+    "<label class='flbl' for='lat'>" L_GEO_LATITUDE "</label>\n"
+    "<input class='finp' type='number' id='lat' name='lat' step='0.000001' aria-label='Latitude'>\n"
+    "</div>\n"
+    "<div>\n"
+    "<label class='flbl' for='lng'>" L_GEO_LONGITUDE "</label>\n"
+    "<input class='finp' type='number' id='lng' name='lng' step='0.000001' aria-label='Longitude'>\n"
+    "</div>\n"
+    "<div>\n"
+    "<label class='flbl' for='alt'>" L_GEO_ALTITUDE "</label>\n"
+    "<input class='finp' type='number' id='alt' name='alt' step='0.1' aria-label='Altitude'>\n"
+    "</div>\n"
+    "<div class='muted'>" L_GEO_HINT "</div>\n"
+    "<div class='row-center'>\n"
+    "<button class='formbtn' type='submit'>" L_GEO_SAVE "</button>\n"
+    "<a class='formbtn secbtn' href='/settings'>" L_GENERAL_BACK "</a>\n"
+    "</div>\n"
+    "</form>\n"
+    "</div>\n"
+    "</body>\n"
+    "</html>\n";
+#endif
 
 
 // CSS files
