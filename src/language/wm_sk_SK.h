@@ -167,4 +167,13 @@
 #define L_TEMPERATURE_CELSIUS    "Celsius (°C)"
 #define L_TEMPERATURE_FAHRENHEIT "Fahrenheit (°F)"
 
+// Geo location settings
+#define L_GEO_LOCATION_3DOTS "Geografická poloha..."
+#define L_GEO_LOCATION       "Geografická poloha"
+#define L_GEO_LATITUDE       "Zemepisn\xc3\xa1 š\xc3\xadrka (\xc2\xb0)"
+#define L_GEO_LONGITUDE      "Zemepisn\xc3\xa1 d\xc4\xba\xc5\xbeka (\xc2\xb0)"
+#define L_GEO_ALTITUDE       "Nadmorsk\xc3\xa1 v\xc3\xb9\xc5\xa1ka (m)"
+#define L_GEO_SAVE           "Uložiť polohu"
+#define L_GEO_HINT           "Zadajte zemepisné súradnice v desatinných stupňoch."
+
 #endif // WM_SK_SK_H

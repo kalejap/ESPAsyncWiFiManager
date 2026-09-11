@@ -167,5 +167,14 @@
 #define L_TEMPERATURE_CELSIUS    "Celsius (\xc2\xb0""C)"
 #define L_TEMPERATURE_FAHRENHEIT "Fahrenheit (\xc2\xb0""F)"
 
+// Geo location settings
+#define L_GEO_LOCATION_3DOTS "Geo Location..."
+#define L_GEO_LOCATION       "Geo Location"
+#define L_GEO_LATITUDE       "Latitude (\xc2\xb0)"
+#define L_GEO_LONGITUDE      "Longitude (\xc2\xb0)"
+#define L_GEO_ALTITUDE       "Altitude (m)"
+#define L_GEO_SAVE           "Save Location"
+#define L_GEO_HINT           "Enter your geographic coordinates in decimal degrees."
+
 
 #endif // WM_EN_US_H

@@ -55,6 +55,10 @@ WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gWiFiHtml, WM_PK_WIFI_HTML);
 // mqtt.html
 WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gMQTTHtml, WM_PK_MQTT_HTML);
 #endif
+#ifdef WM_GEO_LOCATION
+// geo.html
+WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gGeoHtml, WM_PK_GEO_HTML);
+#endif
 
 
 // style.css
@@ -2752,7 +2756,10 @@ bool ESPAsync_WiFiManager::handleStaticFileRequest(AsyncWebServerRequest *pReque
     #ifdef WM_SUPPORT_HOME_ASSISTANT
         { "/mqtt", &gMQTTHtml },
     #endif
-    
+    #ifdef WM_GEO_LOCATION
+        { "/geo", &gGeoHtml },
+    #endif
+
         // CSS styles
         { "/style.css", &gStyleCSS },
 

@@ -95,7 +95,7 @@
 #endif
 
 #ifdef _IOT_OTA_UPDATE_URL
-    #define IOT_OTA_UPDATE_URL STRINGIZE(_IOT_OTA_UPDATE_URL)
+    #define IOT_OTA_UPDATE_URL _IOT_OTA_UPDATE_URL
 #else
     #pragma message("IOT_OTA_UPDATE_URL is not defined. Defaulting to http://0.0.0.0")
     #define IOT_OTA_UPDATE_URL "http://0.0.0.0"
