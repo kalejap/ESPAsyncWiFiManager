@@ -71,7 +71,7 @@
 #define L_WIFI_PASSWORD_2        "Heslo 2"
 #define L_WIFI_ALT_NETWORK       "Alternatívna sieť (voliteľné)"
 #define L_WIFI_OPEN_NETWORK_HINT "Pre otvorené siete nechajte heslo prázdne."
-#define L_WIFI_SAVE              "Uložiť WiFi"
+#define L_WIFI_SAVE              L_GENERAL_SAVE
 
 // MQTT Settings
 #define L_MQTT_SERVER "Server"
@@ -82,7 +82,7 @@
 #define L_MQTT_HOST          "MQTT Host"
 #define L_MQTT_USERNAME      "Používateľské meno"
 #define L_MQTT_BROKER_HINT   "Ak váš broker vyžaduje TLS alebo meno/heslo, vyplňte príslušné polia; inak ich nechajte prázdne."
-#define L_MQTT_SAVE          "Uložiť MQTT"
+#define L_MQTT_SAVE          L_GENERAL_SAVE
 
 // OTA Update
 #define L_OTA_FIRMWARE_UPDATE "Aktualizácia firmvéru"
@@ -120,6 +120,9 @@
 #define L_OTA_REMOTE_LANGUAGE_LABEL  "Jazyk:"
 #define L_OTA_REMOTE_UPDATE_BTN      "Aktualizovať"
 #define L_OTA_REMOTE_START_FAILED    "Spustenie zlyhalo: "
+#define L_OTA_REMOTE_DOWNLOADING     "Sťahujem..."
+#define L_OTA_REMOTE_FAILED          "Aktualizácia zlyhala."
+#define L_OTA_REMOTE_TIMEOUT         "Čas aktualizácie vypršal."
 
 // ota_script.js
 #define L_OTA_JS_UPLOAD_FAILED "Nahrávanie zlyhalo"
@@ -173,7 +176,7 @@
 #define L_GEO_LATITUDE       "Zemepisn\xc3\xa1 š\xc3\xadrka (\xc2\xb0)"
 #define L_GEO_LONGITUDE      "Zemepisn\xc3\xa1 d\xc4\xba\xc5\xbeka (\xc2\xb0)"
 #define L_GEO_ALTITUDE       "Nadmorsk\xc3\xa1 v\xc3\xb9\xc5\xa1ka (m)"
-#define L_GEO_SAVE           "Uložiť polohu"
+#define L_GEO_SAVE           L_GENERAL_SAVE
 #define L_GEO_HINT           "Zadajte zemepisné súradnice v desatinných stupňoch."
 
 #endif // WM_SK_SK_H

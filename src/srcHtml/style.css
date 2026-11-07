@@ -346,7 +346,7 @@ h2 {
   .stval { flex: 1 1 60%; }
 }
 
-/* ── Hardware status table — compact, always row layout ── */
+/* Hardware status table — compact, always row layout */
 .sttbl-hw {
   width: 100%;
   max-width: 340px;
@@ -364,7 +364,7 @@ h2 {
 .sttbl-hw th { color: var(--header); font-weight: 700; }
 .sttbl-hw td { color: #12343b; font-weight: 600; }
 
-/* ── Restart modal ──────────────────────────────────────── */
+/* Restart modal */
 .modal-overlay {
   position: fixed; inset: 0;
   background: rgba(0,0,0,0.55);
@@ -395,6 +395,20 @@ h2 {
 .modal-btn:active { opacity:0.8; }
 .modal-btn-yes { background:var(--accent); color:#fff; }
 .modal-btn-no  { background:transparent; color:var(--muted); border:0.125rem solid rgba(25,118,210,0.2); }
+
+/* Small inline table action button (DS18B20 move up/down arrows) */
+.ds18btn {
+  padding: 2px 8px;
+  margin: 1px;
+  cursor: pointer;
+  border-radius: .3rem;
+  background: #e8f4fd;
+  border: 1px solid rgba(25,118,210,.3);
+  color: var(--accent);
+  font-size: .95rem;
+}
+.ds18btn:hover  { background: #d0eaf8; }
+.ds18btn:active { transform: translateY(1px); }
 
 .swbtn {
   padding: 2px 12px;

@@ -49,12 +49,41 @@ function showUpdateModal(data) {
         var lang = document.getElementById('rmLang').value;
         var url  = data.firmwares[lang];
         document.body.removeChild(overlay);
+        var statusEl = gebi('remoteStatus');
+        statusEl.textContent = /*L_OTA_REMOTE_DOWNLOADING*/'Downloading...';
         fetch('/ota/remote-start?url=' + encodeURIComponent(url))
             .then(function() {
-                showRestartModal(30, /*L_OTA_UPDATE_IN_PROGRESS*/'Firmware update in progress.\nDo not turn off the device.');
+                var polls = 0, fails = 0;
+                var t = setInterval(function() {
+                    if (++polls > 180) {
+                        clearInterval(t);
+                        statusEl.textContent = /*L_OTA_REMOTE_TIMEOUT*/'Update timed out.';
+                        return;
+                    }
+                    fetch('/ota/remote-progress')
+                        .then(function(r) { return r.json(); })
+                        .then(function(j) {
+                            fails = 0;
+                            if (j.progress < 0) {
+                                clearInterval(t);
+                                statusEl.textContent = /*L_OTA_REMOTE_FAILED*/'Update failed.';
+                            } else if (j.progress >= 100) {
+                                clearInterval(t);
+                                showRestartModal(60, /*L_OTA_UPDATE_IN_PROGRESS*/'Firmware update in progress.\nDo not turn off the device.');
+                            } else {
+                                statusEl.textContent = /*L_OTA_REMOTE_DOWNLOADING*/'Downloading...' + ' ' + j.progress + '%';
+                            }
+                        })
+                        .catch(function() {
+                            if (++fails >= 10) {
+                                clearInterval(t);
+                                showRestartModal(60, /*L_OTA_UPDATE_IN_PROGRESS*/'Firmware update in progress.\nDo not turn off the device.');
+                            }
+                        });
+                }, 1000);
             })
             .catch(function(e) {
-                gebi('remoteStatus').textContent = /*L_OTA_REMOTE_START_FAILED*/'Start failed: ' + e.message;
+                statusEl.textContent = /*L_OTA_REMOTE_START_FAILED*/'Start failed: ' + e.message;
             });
     };
     document.getElementById('rmBack').onclick = function() {
@@ -68,8 +97,18 @@ document.addEventListener('DOMContentLoaded', function() {
         if (!url) return;
         gebi('remoteStatus').textContent = /*L_OTA_REMOTE_CHECKING*/'Checking...';
         try {
-            var r = await fetch('/ota/remote-check?url=' + encodeURIComponent(url));
-            var j = await r.json();
+            await fetch('/ota/remote-check?url=' + encodeURIComponent(url));
+            var j;
+            for (var i = 0; i < 30; i++) {
+                await new Promise(function(res) { setTimeout(res, 1000); });
+                var r = await fetch('/ota/remote-check');
+                j = await r.json();
+                if (!j.status || j.status !== 'pending') break;
+            }
+            if (!j || j.status === 'pending') {
+                gebi('remoteStatus').textContent = /*L_OTA_REMOTE_CHECK_FAILED*/'Check failed: timeout';
+                return;
+            }
             if (j.error) {
                 gebi('remoteStatus').textContent = /*L_OTA_REMOTE_ERROR*/'Error: ' + j.error;
                 return;

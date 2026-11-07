@@ -71,7 +71,7 @@
 #define L_WIFI_PASSWORD_2        "Password 2"
 #define L_WIFI_ALT_NETWORK       "Alternative Network (Optional)"
 #define L_WIFI_OPEN_NETWORK_HINT "Leave password empty for open networks."
-#define L_WIFI_SAVE              "Save WiFi"
+#define L_WIFI_SAVE              L_GENERAL_SAVE
 
 // MQTT Settings
 #define L_MQTT_SERVER "Server"
@@ -82,7 +82,7 @@
 #define L_MQTT_HOST          "MQTT Host"
 #define L_MQTT_USERNAME      "Username"
 #define L_MQTT_BROKER_HINT   "If your broker requires TLS or a username/password, fill the fields; otherwise leave blank."
-#define L_MQTT_SAVE          "Save MQTT"
+#define L_MQTT_SAVE          L_GENERAL_SAVE
 
 // OTA Update
 #define L_OTA_FIRMWARE_UPDATE "Firmware Update"
@@ -120,6 +120,9 @@
 #define L_OTA_REMOTE_LANGUAGE_LABEL  "Language:"
 #define L_OTA_REMOTE_UPDATE_BTN      "Update"
 #define L_OTA_REMOTE_START_FAILED    "Start failed: "
+#define L_OTA_REMOTE_DOWNLOADING     "Downloading..."
+#define L_OTA_REMOTE_FAILED          "Update failed."
+#define L_OTA_REMOTE_TIMEOUT         "Update timed out."
 
 // ota_script.js
 #define L_OTA_JS_UPLOAD_FAILED "Upload failed"
@@ -173,7 +176,7 @@
 #define L_GEO_LATITUDE       "Latitude (\xc2\xb0)"
 #define L_GEO_LONGITUDE      "Longitude (\xc2\xb0)"
 #define L_GEO_ALTITUDE       "Altitude (m)"
-#define L_GEO_SAVE           "Save Location"
+#define L_GEO_SAVE           L_GENERAL_SAVE
 #define L_GEO_HINT           "Enter your geographic coordinates in decimal degrees."
 
 

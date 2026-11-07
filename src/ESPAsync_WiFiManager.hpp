@@ -949,6 +949,10 @@ private:
     void          handleOTARemoteProgress(AsyncWebServerRequest *request);
 #endif
 
+#ifdef WM_SUPPORT_HOME_ASSISTANT
+    void          handleMQTTSave(AsyncWebServerRequest *request);
+#endif
+
     bool          captivePortal(AsyncWebServerRequest *request);   
     void          attacheHandlers(ArRequestFilterFunction filtern);
 
@@ -1045,7 +1049,7 @@ private:
 
     // DNS server
     const byte              _DNS_PORT = 53;
-    bool                    _connect;
+    bool                    _connect = false;
     bool                    _stopConfigPortal = false;
     bool                    _debug = false;     //true;
     

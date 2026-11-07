@@ -227,6 +227,12 @@ namespace ESPAsync_WiFiManagerUtils {
             return SendMemoryBlock(pBlock->pBlock, pBuffer, bufLen, index);
         });
 
+        if (!pResponse)
+        {
+            pRequest->send(503, WM_HTTP_HEAD_CT_TEXT_PLAIN, F("Out of memory"));
+            return;
+        }
+
         for (size_t i = 0; i < pBlock->pHeader->count; i++)
         {
             pResponse->addHeader(pBlock->pHeader->pItems[i].pName, pBlock->pHeader->pItems[i].pValue);
@@ -254,6 +260,12 @@ namespace ESPAsync_WiFiManagerUtils {
         {
             return SendMemoryBlock(pBlock->pBlock, pBuffer, bufLen, index);
         });
+
+        if (!pResponse)
+        {
+            pRequest->send(503, WM_HTTP_HEAD_CT_TEXT_PLAIN, F("Out of memory"));
+            return;
+        }
 
         for (size_t i = 0; i < pBlock->pHeader->count; i++)
         {

@@ -54,6 +54,7 @@ WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gWiFiHtml, WM_PK_WIFI_HTML);
 #ifdef WM_SUPPORT_HOME_ASSISTANT
 // mqtt.html
 WM_DEFINE_STATIC_HTML_FILE_AS_SINGLE_BLOCK(gMQTTHtml, WM_PK_MQTT_HTML);
+#include "MQTTSettings.h"
 #endif
 #ifdef WM_GEO_LOCATION
 // geo.html
@@ -680,6 +681,10 @@ void ESPAsync_WiFiManager::attacheHandlers(ArRequestFilterFunction filterFn)
         std::bind(&ESPAsync_WiFiManager::handleOTARemoteProgress, this, _1)).setFilter(filterFn);
 #endif
 
+#ifdef WM_SUPPORT_HOME_ASSISTANT
+    _server->on("/mqtt", HTTP_POST, std::bind(&ESPAsync_WiFiManager::handleMQTTSave, this, _1)).setFilter(filterFn);
+#endif
+
     //Microsoft captive portal. Maybe not needed. Might be handled by notFound handler.
     _server->on("/fwlink",   std::bind(&ESPAsync_WiFiManager::handleRoot, this, _1)).setFilter(filterFn);
 
@@ -932,7 +937,10 @@ void ESPAsync_WiFiManager::criticalLoop()
             scan();
             _scannow = millis();
         }
+    }
 
+    if (_modeless || _isSTAmode)
+    {
         if (_connect)
         {
             _connect = false;
@@ -2005,6 +2013,23 @@ inline void ESPAsync_WiFiManager::handleSettings(AsyncWebServerRequest* pRequest
         ESPAsync_WiFiManagerUtils::getSettingsPage(_pCustomSettingsButtons));
 }
 
+#ifdef WM_SUPPORT_HOME_ASSISTANT
+inline void ESPAsync_WiFiManager::handleMQTTSave(AsyncWebServerRequest *request)
+{
+    LOGDEBUG(F("ESPAsync_WiFiManager::handleMQTTSave"));
+
+    MQTTSettings s;
+    s.read();
+    if (request->hasArg("host"))  s.setMQTTServer(request->arg("host"));
+    if (request->hasArg("port"))  s.setMQTTPort((uint16_t)request->arg("port").toInt());
+    if (request->hasArg("user"))  s.setMQTTUser(request->arg("user"));
+    if (request->hasArg("pwd"))   s.setMQTTPassword(request->arg("pwd"));
+    if (s.isDirty()) s.save();
+
+    request->redirect("/");
+}
+#endif
+
 // Handle the WLAN save form and redirect to WLAN config page again
 inline void ESPAsync_WiFiManager::handleWiFiSave(AsyncWebServerRequest *request)
 {
@@ -2425,7 +2450,7 @@ void ESPAsync_WiFiManager::handleOTAUpdateStart(AsyncWebServerRequest *pRequest)
 
             String hwid = pRequest->getParam("hwid")->value();
             LOGDEBUG(String("HWID: "+hwid+"\n").c_str());
-            String current_hwid = String(_hardwareId);
+            String current_hwid = String(FPSTR(_hardwareId));
             if (hwid != current_hwid)
             {
                 LOGDEBUG(F("ERROR: HWID not valid\n"));
@@ -2449,12 +2474,6 @@ void ESPAsync_WiFiManager::handleOTAUpdateStart(AsyncWebServerRequest *pRequest)
         // Serial output must be active to see the callback serial prints
         Serial.setDebugOutput(true);
     #endif
-
-    // Pre-OTA update callback
-    if (_preOTAUpdateCallback != NULL)
-    {
-        _preOTAUpdateCallback();
-    }
 
     // Start update process
     #if defined(ESP8266)
@@ -2510,12 +2529,19 @@ void ESPAsync_WiFiManager::handleOTAUpdateUpload(AsyncWebServerRequest *pRequest
     }
 }
 
-void ESPAsync_WiFiManager::handleOTAUpdateUploadFile(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final) 
+void ESPAsync_WiFiManager::handleOTAUpdateUploadFile(AsyncWebServerRequest *request, String filename, size_t index, uint8_t *data, size_t len, bool final)
 {
-    if (!index) 
+    if (!index)
     {
         // Reset progress size on first frame
         _current_progress_size = 0;
+
+        // Pre-OTA callback fires here, after /ota/start response is already sent,
+        // so I2C/LCD blocking operations cannot drop the TCP connection.
+        if (_preOTAUpdateCallback != NULL)
+        {
+            _preOTAUpdateCallback();
+        }
     }
 
     // Write chunked data to the free sketch space
@@ -2553,6 +2579,8 @@ void ESPAsync_WiFiManager::handleOTAUpdateUploadFile(AsyncWebServerRequest *requ
 
 void ESPAsync_WiFiManager::handleNotFound(AsyncWebServerRequest *pRequest)
 {
+    LOGWARN1(F("ESPAsync_WiFiManager::handleNotFound: "), pRequest->url());
+
     if (captivePortal(pRequest))
     {
         // If captive portal redirect instead of displaying the error page.

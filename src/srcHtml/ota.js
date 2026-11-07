@@ -203,19 +203,18 @@ async function startUpload(file, md5, hwid) {
         //timeOut = setTimeout(updateProgress, 500);
         //return;
         
-        const d=await fetch(`/ota/start?mode=${f}&hash=${md5}&hwid=${hwid}`);
+        const d=await fetch(`/ota/start?mode=${f}&hash=${md5}&hwid=${encodeURIComponent(hwid)}`);
         if(!d.ok)
         {
           throw new Error(d.statusText);
         }
-        
-        if (d.status == 200 && d.statusText !== 'OK')
-        {
-          throw new Error(d.statusText);
-        }
-            
+
         const a=await d.text();
         console.log('Start OTA response:',a);
+        if (a !== 'OK')
+        {
+          throw new Error(a);
+        }
         
         const c=new FormData;
         let i=new XMLHttpRequest;
@@ -240,11 +239,11 @@ async function startUpload(file, md5, hwid) {
                   finishedOK();
                 else if(i.status==400){
                   let r=i.responseText;
-                  throw new Error(/*L_OTA_JS_UPLOAD_FAILED*/'Upload failed.'+' '+r);
+                  failed(/*L_OTA_JS_UPLOAD_FAILED*/'Upload failed.'+' '+r);
                 }
                 else{
                   let r=/*L_OTA_JS_SERVER_RETURNED_STATUS*/'Server returned status code '+i.status;
-                  throw new Error(/*L_OTA_JS_UPLOAD_FAILED*/'Upload failed.'+' '+r);
+                  failed(/*L_OTA_JS_UPLOAD_FAILED*/'Upload failed.'+' '+r);
                 }
         };
         

@@ -45,7 +45,7 @@
 <body>
   <div class='container'>
     <h1><!--L_WIFI_CONFIGURATION-->WiFi Configuration</h1>
-    <form class='formsec' method='POST' action='./wifi'>
+    <form class='formsec' method='POST' action='./wifisave'>
       <h2><!--L_WIFI_PRIMARY_NETWORK-->Primary Network</h2>
       <div>
         <label class='flbl' for='ssid1'><!--L_WIFI_SSID_1-->SSID 1</label>
@@ -63,7 +63,7 @@
       <h2><!--L_WIFI_ALT_NETWORK-->Alternative Network (Optional)</h2>
       <div>
         <label class='flbl' for='ssid2'><!--L_WIFI_SSID_2-->SSID 2</label>
-        <input class='finp' type='text' id='ssid2' name='ssid2' required aria-label='WiFi SSID'>
+        <input class='finp' type='text' id='ssid2' name='ssid2' aria-label='WiFi SSID'>
       </div>
       <div>
         <label class='flbl' for='pwd2'><!--L_WIFI_PASSWORD_2-->Password 2</label>
@@ -76,7 +76,7 @@
 
       <div class='row-center'>
         <button class='formbtn' type='submit'><!--L_WIFI_SAVE-->Save WiFi</button>
-        <a class='formbtn secbtn' href='/'><!--L_GENERAL_BACK-->Back</a>
+        <a class='formbtn secbtn' href='javascript:history.back()'><!--L_GENERAL_BACK-->Back</a>
       </div>
     </form>
   </div>
